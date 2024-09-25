@@ -1,6 +1,10 @@
 # Representación temporal de alertas ZTF
 ## P: alto, Tutor: Sebastián Guzmán
 
+## Integrantes
+- Juan Pablo Contreras
+- Pascual Marcone
+
 ALeRCE es un broker de alertas astronómicas que recibe y procesa observaciones provenientes del survey ZTF en tiempo real. Dentro de los datos entregados por las alertas se encuentran los stamps o imágenes del lugar donde se produce la alerta. Estos stamps están compuestos por 3 imágenes: La imagen de referencia, la cual corresponde a un promedio de la posición antes de la alerta, imagen de ciencia correspondiente a una foto en el momento en que se detecta la alerta y la imagen de diferencia, siendo una diferencia entre las dos anteriores. Un objeto puede ser detectado más de una vez, lo cual agrega un carácter temporal a las alertas. El objetivo del proyecto es utilizar un AutoEncoder compuesto por una parte convolucional que procesa las imágenes y una parte recurrente que pueda procesar las características recurrentes entregadas por ZTF. Como mínimo se espera que implementen un AutoEncoder convolucional de la primera alerta basándose en el modelo entregado en referencias [1] y exploren la representación generada en el espacio latente. La base de datos requiere ser preprocesada antes de poder ser utilizada y se espera que realicen aumentaciones similares a las del modelo de referencia [2] y las del modelo mejorado [5].
 
 Una vez generado el modelo para la primera alerta, se espera que puedan utilizar la representación para clasificar, donde se espera agreguen features para mejorar la clasificación, comparando resultados con lo obtenido en referencias [2]. Finalmente, se espera que puedan incluir capas recurrentes al modelo para procesar el carácter temporal de las muestras y comparar resultados de representación y clasificación con referencias [2].
