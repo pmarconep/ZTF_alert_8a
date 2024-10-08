@@ -100,3 +100,10 @@ In summary, the augmentation process would involve rotating images, normalizing 
 - Core-collapse supernovae (SNe)
     - High energy explosion in collpase
     - High increase with low decrease in luminosity
+
+
+# Meeting 2 
+
+## Encoder Arquitecture 
+The accuracy increases with the number of latent dimensions Table IIa reaching its maximum at J = 21.
+![alt text](image.png)
