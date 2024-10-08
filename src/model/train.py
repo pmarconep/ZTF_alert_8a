@@ -164,19 +164,15 @@ def train_model(
 
         # Entrenamiento del modelo
         model.train()
-        for i, (img, temp, diff, y_batch) in enumerate(train_loader):
+        for i, diff, y_batch in enumerate(train_loader):
             # print('\r{}% complete'.format(np.round((epoch + 1)/(max_epochs)*100, decimals = 2)), end='')
             
             if use_gpu:
-                img = img.cuda()
-                temp = temp.cuda()
                 diff = diff.cuda()
                 y_batch = y_batch.cuda()
-                
-            x_combined = torch.cat((img, temp, diff), dim=1)
 
             # Predicción
-            y_predicted, mu, logvar, sigma = model(x_combined)
+            y_predicted, mu, logvar, sigma = model(diff)
 
             y_batch = y_batch.reshape(-1, 1).float()
 
@@ -200,14 +196,12 @@ def train_model(
 
         # Evaluación del modelo
         model.eval()
-        img_val, temp_val, diff_val, y_val = next(iter(val_loader)) #implementar test loader evaluation
+        diff_val, y_val = next(iter(val_loader)) #implementar test loader evaluation
         if use_gpu:
-            img_val, temp_val, diff_val = img_val.cuda(), temp_val.cuda(), diff_val.cuda()
-            y_val = y_val.cuda()
-
-        x_combined_val = torch.cat((img_val, temp_val, diff_val), dim=1)        
+            diff_val = diff_val.cuda()
+            y_val = y_val.cuda()        
         
-        y_predicted = model(img_val, temp_val, diff_val)
+        y_predicted = model(diff_val)
         y_val = y_val.reshape(-1, 1).float()
         val_loss = criterion(y_predicted, y_val).item()
 
