@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 
 def performance_metrics(TP, FP, FN, TN):
     """Calcula metricas de desempeño.
@@ -50,3 +51,26 @@ def conf_matrix_given_threshold(true_labels, prediction, threshold):
     probabilities_with_threshold = (prediction > threshold).long()
     TN, FP, FN, TP = confusion_matrix(true_labels, probabilities_with_threshold).ravel()
     return TN, FP, FN, TP
+
+def show_curves(curves):
+    fig, ax = plt.subplots(1, 2, figsize=(13, 5))
+    fig.set_facecolor('white')
+
+    epochs = np.arange(len(curves["val_loss"])) + 1
+
+    ax[0].plot(epochs, curves['val_loss'], label='validation')
+    ax[0].plot(epochs, curves['train_loss'], label='training')
+    ax[0].set_xlabel('Epoch')
+    ax[0].set_ylabel('Loss')
+    ax[0].set_title('Loss evolution during training')
+    ax[0].legend()
+
+    ax[1].plot(epochs, curves['val_acc'], label='validation')
+    ax[1].plot(epochs, curves['train_acc'], label='training')
+    ax[1].set_xlabel('Epoch')
+    ax[1].set_ylabel('Accuracy')
+    ax[1].set_title('Accuracy evolution during training')
+    ax[1].legend()
+
+    plt.show()
+    return fig
