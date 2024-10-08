@@ -39,22 +39,31 @@ class VAE(nn.Module):
 
         # Encoder network
         self.encoder = nn.Sequential(
+
+            # 1st Convolutional Layer
             nn.Conv2d(1, 64, kernel_size=3, stride=1, padding=1),  # Output: (64, 21, 21)
-            nn.ReLU(),
-            nn.BatchNorm2d(64),
+            nn.ReLU(), # Activation function
+            nn.BatchNorm2d(64), # Batch Normalization 
+
+            # 2nd Convolutional Layer
             nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1),  # Output: (64, 11, 11)
             nn.ReLU(),
             nn.BatchNorm2d(64),
+
+            # 3rd Convolutional Layer
             nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),  # Output: (64, 11, 11)
             nn.ReLU(),
             nn.BatchNorm2d(64),
+
+            # 4th Convolutional Layer
             nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1),  # Output: (64, 6, 6)
             nn.ReLU(),
             nn.BatchNorm2d(64)
         )
 
         # Latent space parameters
-        self.fc_mu = nn.Linear(64 * 6 * 6, latent_dim)
+        # self.flatter = nn.Flatten()
+        self.fc_mu = nn.Linear(64 * 6 * 6, latent_dim) # 
         self.fc_logvar = nn.Linear(64 * 6 * 6, latent_dim)
 
         # Decoder network
