@@ -42,9 +42,9 @@ class VAE(nn.Module):
         )
 
         # Latent space parameters
-        # self.flatter = nn.Flatten()
-        self.fc_mu = nn.Linear(64 * 6 * 6, latent_dim) # 
-        self.fc_logvar = nn.Linear(64 * 6 * 6, latent_dim)
+        self.flatter = nn.Flatten() # Flatten the output of the encoder 6*6*64
+        self.fc_mu = nn.Linear(in_features=2304, out_features=latent_dim) # 
+        self.fc_logvar = nn.Linear(in_features=2304, out_features=latent_dim)
 
         # Decoder network
         self.fc_decoder = nn.Linear(latent_dim, 64 * 6 * 6)
