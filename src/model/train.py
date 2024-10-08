@@ -6,7 +6,7 @@ import torch
 from torch import nn
 import torchvision
 from torch.utils.data import TensorDataset, DataLoader
-
+import torch.nn.functional as F
 
 from matplotlib import pyplot as plt
 import numpy as np
@@ -30,6 +30,86 @@ class EarlyStopping:
         # Retornamos True si debemos detenernos y False si aún no
         # Nos detenemos cuando el número de épocas sin mejora es mayor o igual que el número de épocas de tolerancia
         return self.epochs_with_no_improvement >= self.n_epochs_tolerance
+    
+class VAE(nn.Module):
+    def __init__(self, latent_dim=21, img_size=21):
+        super(VAE, self).__init__()
+        self.latent_dim = latent_dim
+        self.img_size = img_size
+
+        # Encoder network
+        self.encoder = nn.Sequential(
+            nn.Conv2d(1, 64, kernel_size=3, stride=1, padding=1),  # Output: (64, 21, 21)
+            nn.ReLU(),
+            nn.BatchNorm2d(64),
+            nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1),  # Output: (64, 11, 11)
+            nn.ReLU(),
+            nn.BatchNorm2d(64),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),  # Output: (64, 11, 11)
+            nn.ReLU(),
+            nn.BatchNorm2d(64),
+            nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1),  # Output: (64, 6, 6)
+            nn.ReLU(),
+            nn.BatchNorm2d(64)
+        )
+
+        # Latent space parameters
+        self.fc_mu = nn.Linear(64 * 6 * 6, latent_dim)
+        self.fc_logvar = nn.Linear(64 * 6 * 6, latent_dim)
+
+        # Decoder network
+        self.fc_decoder = nn.Linear(latent_dim, 64 * 6 * 6)
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(64, 64, kernel_size=3, stride=1, padding=1),  # Output: (64, 6, 6)
+            nn.ReLU(),
+            nn.BatchNorm2d(64),
+            nn.Upsample(scale_factor=2),  # Output: (64, 12, 12)
+            nn.ConvTranspose2d(64, 64, kernel_size=3, stride=1, padding=1),  # Output: (64, 12, 12)
+            nn.ReLU(),
+            nn.BatchNorm2d(64),
+            nn.Upsample(scale_factor=2),  # Output: (64, 24, 24)
+            nn.ConvTranspose2d(64, 1, kernel_size=3, stride=1, padding=1),  # Output: (1, 21, 21)
+            nn.Sigmoid()  # Output should match original image size
+        )
+
+        # Auto-regularization network (for estimating variance)
+        self.fc_sigma = nn.Sequential(
+            nn.Linear(latent_dim, 36),
+            nn.ReLU(),
+            nn.Linear(36, 1),
+            nn.Sigmoid()  # Constrain variance to be between small positive values
+        )
+
+    def encode(self, x):
+        h = self.encoder(x)
+        h = h.view(-1, 64 * 6 * 6)  # Flatten
+        mu = self.fc_mu(h)
+        logvar = self.fc_logvar(h)
+        return mu, logvar
+
+    def reparametrize(self, mu, logvar):
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        return mu + eps * std
+
+    def decode(self, z):
+        h = self.fc_decoder(z)
+        h = h.view(-1, 64, 6, 6)
+        x_recon = self.decoder(h)
+        return x_recon
+
+    def forward(self, x):
+        mu, logvar = self.encode(x)
+        z = self.reparametrize(mu, logvar)
+        sigma = self.fc_sigma(z)  # Estimate variance as part of auto-regularization
+        x_recon = self.decode(z)
+        return x_recon, mu, logvar, sigma
+
+def vae_loss_function(recon_x, x, mu, logvar, sigma):
+    recon_loss = F.mse_loss(recon_x, x, reduction='sum') / (2 * sigma) + torch.log(sigma)
+    # Kullback-Leibler divergence
+    kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    return recon_loss + kl_loss
 
 def train_model(
     model,
@@ -53,11 +133,11 @@ def train_model(
     # Create DataLoaders
     batch_size = 32
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=use_gpu)
-    val_loader = DataLoader(val_dataset, batch_size==len(val_dataset), shuffle=False, pin_memory=use_gpu)
-    test_loader = DataLoader(test_dataset, batch_size==len(test_dataset), shuffle=False, pin_memory=use_gpu)
+    val_loader = DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False, pin_memory=use_gpu)
+    test_loader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False, pin_memory=use_gpu)
     
     # Optimizador
-    optimizer = torch.optim.SGD(model.parameters(), lr=lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     # Listas para guardar curvas de entrenamiento
     curves = {
@@ -67,10 +147,6 @@ def train_model(
         "val_loss": []
     }
 
-    # Early stopping
-    n_epochs_with_no_improvement = 0
-    stop = False
-
     t0 = time.perf_counter()
 
     for epoch in range(max_epochs):
@@ -79,20 +155,25 @@ def train_model(
 
         # Entrenamiento del modelo
         model.train()
-        for i, (x_batch, y_batch) in enumerate(train_loader):
+        for i, (img, temp, diff, y_batch) in enumerate(train_loader):
             # print('\r{}% complete'.format(np.round((epoch + 1)/(max_epochs)*100, decimals = 2)), end='')
             
             if use_gpu:
-                x_batch = x_batch.cuda()
+                img = img.cuda()
+                temp = temp.cuda()
+                diff = diff.cuda()
                 y_batch = y_batch.cuda()
+                
+            x_combined = torch.cat((img, temp, diff), dim=1)
 
             # Predicción
-            y_predicted = model(x_batch)
+            y_predicted, mu, logvar, sigma = model(x_combined)
 
             y_batch = y_batch.reshape(-1, 1).float()
 
             # Cálculo de loss
-            loss = criterion(y_predicted, y_batch)
+
+            loss = criterion(y_predicted, y_batch, mu, logvar, sigma)
 
             # Actualización de parámetros
             optimizer.zero_grad()
@@ -110,18 +191,19 @@ def train_model(
 
         # Evaluación del modelo
         model.eval()
-        x_val, y_val = next(iter(val_loader)) #implementar test loader evaluation
+        img_val, temp_val, diff_val, y_val = next(iter(val_loader)) #implementar test loader evaluation
         if use_gpu:
-            x_val = x_val.cuda()
+            img_val, temp_val, diff_val = img_val.cuda(), temp_val.cuda(), diff_val.cuda()
             y_val = y_val.cuda()
 
-        y_predicted = model(x_val)
+        x_combined_val = torch.cat((img_val, temp_val, diff_val), dim=1)        
+        
+        y_predicted = model(img_val, temp_val, diff_val)
         y_val = y_val.reshape(-1, 1).float()
-        loss = criterion(y_predicted, y_val)
+        val_loss = criterion(y_predicted, y_val).item()
 
         class_prediction = (y_predicted > 0.5).long()
         val_acc = (y_val == class_prediction).sum() / y_val.shape[0]
-        val_loss = loss.item()
 
         curves["train_acc"].append(train_acc.item())
         curves["val_acc"].append(val_acc.item())
