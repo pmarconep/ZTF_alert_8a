@@ -82,7 +82,7 @@ def train_model(
                 y_batch = y_batch.cuda()
 
             # Predicción
-            y_predicted, mu, logvar, sigma = model(diff)
+            y_predicted, mu, logvar, sigma = model([diff])
 
             y_batch = y_batch.reshape(-1, 1).float()
 
@@ -111,7 +111,7 @@ def train_model(
             diff_val = diff_val.cuda()
             y_val = y_val.cuda()        
         
-        y_predicted = model(diff_val)
+        y_predicted = model([diff_val])
         y_val = y_val.reshape(-1, 1).float()
         val_loss = criterion(y_predicted, y_val).item()
 
