@@ -5,6 +5,8 @@ import time
 import torch
 from torch import nn
 import torchvision
+from torch.utils.data import TensorDataset, DataLoader
+
 
 from matplotlib import pyplot as plt
 import numpy as np
@@ -33,6 +35,7 @@ def train_model(
     model,
     train_dataset,
     val_dataset,
+    test_dataset,
     max_epochs,
     criterion,
     batch_size,
@@ -46,9 +49,13 @@ def train_model(
     early_stopping = EarlyStopping(n_epochs_tolerance=early_stopping_tolerance)
 
     # Definición de dataloader
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=use_gpu)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False, pin_memory=use_gpu)
-
+    
+    # Create DataLoaders
+    batch_size = 32
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=use_gpu)
+    val_loader = DataLoader(val_dataset, batch_size==len(val_dataset), shuffle=False, pin_memory=use_gpu)
+    test_loader = DataLoader(test_dataset, batch_size==len(test_dataset), shuffle=False, pin_memory=use_gpu)
+    
     # Optimizador
     optimizer = torch.optim.SGD(model.parameters(), lr=lr)
 
@@ -103,7 +110,7 @@ def train_model(
 
         # Evaluación del modelo
         model.eval()
-        x_val, y_val = next(iter(val_loader))
+        x_val, y_val = next(iter(val_loader)) #implementar test loader evaluation
         if use_gpu:
             x_val = x_val.cuda()
             y_val = y_val.cuda()
