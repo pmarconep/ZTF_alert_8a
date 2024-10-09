@@ -1,5 +1,4 @@
 
-
 from pathlib import Path
 import time
 
@@ -77,20 +76,17 @@ def train_model(
         model.train()
         for i, (diff, y_batch) in enumerate(train_loader):
             # print('\r{}% complete'.format(np.round((epoch + 1)/(max_epochs)*100, decimals = 2)), end='')
-            diff = diff#.unsqueeze(1).permute(1,0,2,3)
-            #print(diff.shape, y_batch.shape)
+        
             if use_gpu:
                 diff = diff.cuda()
                 y_batch = y_batch.cuda()
 
             # Predicción
-            y_predicted, mu, logvar, sigma = model(diff)
+            y_predicted, mu, logvar = model(diff)
             # y_predicted, mu, logvar, sigma = model(diff)
 
-            y_batch = y_batch.reshape(-1, 1).float()
-
             # Cálculo de loss
-            # loss = criterion(y_predicted, y_batch, mu, logvar, sigma)
+            loss = criterion(y_predicted, y_batch, mu, logvar)
 
             # Actualización de parámetros
             optimizer.zero_grad()
