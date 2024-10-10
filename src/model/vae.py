@@ -35,8 +35,8 @@ class Encoder(nn.Module):
         h = self.layers(x)
         mu = self.fc_mu(h)
         logvar = self.fc_logvar(h)
-        return mu, logvar
-        return self.reparametrize(mu[0], logvar[0])
+        # return mu, logvar
+        return self.reparametrize(mu, logvar)
 
 class Decoder(nn.Module):
     def __init__(self, latent_dim):
