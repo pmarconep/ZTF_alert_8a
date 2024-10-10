@@ -65,12 +65,31 @@ def show_curves(curves):
     ax[0].set_title('Loss evolution during training')
     ax[0].legend()
 
-    ax[1].plot(epochs, curves['val_acc'], label='validation')
-    ax[1].plot(epochs, curves['train_acc'], label='training')
-    ax[1].set_xlabel('Epoch')
-    ax[1].set_ylabel('Accuracy')
-    ax[1].set_title('Accuracy evolution during training')
-    ax[1].legend()
+    # ax[1].plot(epochs, curves['val_acc'], label='validation')
+    # ax[1].plot(epochs, curves['train_acc'], label='training')
+    # ax[1].set_xlabel('Epoch')
+    # ax[1].set_ylabel('Accuracy')
+    # ax[1].set_title('Accuracy evolution during training')
+    # ax[1].legend()
+
+    plt.show()
+    return fig
+
+def show_loss(curves1, curves2, curves3, curves4, curves5):
+    fig, ax = plt.subplots(1, 5, figsize=(32.5, 5))
+    fig.set_facecolor('white')
+
+    epochs = np.arange(len(curves["val_loss"])) + 1
+
+    curves = [curves1, curves2, curves3, curves4, curves5]
+    
+    for i in range(5):
+        ax[i].plot(epochs, curves[i]['val_loss'], label='validation')
+        ax[i].plot(epochs, curves[i]['train_loss'], label='training')
+        ax[i].set_xlabel('Epoch')
+        ax[i].set_ylabel('Loss')
+        ax[i].set_title(f'Loss evolution during training (Plot {i+1})')
+        ax[i].legend()
 
     plt.show()
     return fig

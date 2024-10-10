@@ -65,15 +65,17 @@ def train_model(
     }
 
     t0 = time.perf_counter()
+    
+    iteration = 0
+    n_batches = len(train_loader)
 
     for epoch in range(max_epochs):
         cumulative_train_loss = 0
         cumulative_train_corrects = 0
-        print(epoch)
+        print(f'\rTraining model: epoch {epoch} out of {max_epochs}', end='')
         # Entrenamiento del modelo
         model.train()
         for i, (diff, y_batch) in enumerate(train_loader):
-            # print('\r{}% complete'.format(np.round((epoch + 1)/(max_epochs)*100, decimals = 2)), end='')
             # diff = diff#.unsqueeze(1).permute(1,0,2,3)
             #print(diff.shape, y_batch.shape)
             if use_gpu:
@@ -90,6 +92,12 @@ def train_model(
             optimizer.step()
 
             cumulative_train_loss += loss.item()
+            
+            if (i % (n_batches // 6) == 0) and (i > 0):
+
+                print(f"\rEpoch {epoch + 1}/{max_epochs} -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {train_loss:4f}, Train acc: {train_acc:4f}", end='')
+
+            iteration += 1
 
             # Calculamos número de aciertos
             # class_prediction = (y_predicted > 0.5)
@@ -107,7 +115,7 @@ def train_model(
         
         reconstruction, mu, logvar, sigma = model(diff)
            
-        val_loss = criterion(reconstruction, diff, mu, logvar, sigma).item
+        val_loss = criterion(reconstruction, diff, mu, logvar, sigma).mean().item()
 
 
         # class_prediction = (y_predicted > 0.5).long()
@@ -125,6 +133,7 @@ def train_model(
         #     break
 
     tiempo_ejecucion = time.perf_counter() - t0
+    print('\n')
     # print(f"Tiempo total de entrenamiento: {time.perf_counter() - t0:.4f} [s]")
 
     model.cpu()
