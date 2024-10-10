@@ -51,7 +51,7 @@ def train_model(
     # Definición de dataloader
     
     # Create DataLoaders
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=6, pin_memory=use_gpu)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=use_gpu)
     val_loader = DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False, pin_memory=use_gpu)
     # test_loader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False, pin_memory=use_gpu)
     
@@ -60,8 +60,6 @@ def train_model(
 
     # Listas para guardar curvas de entrenamiento
     curves = {
-        "train_acc": [],
-        "val_acc": [],
         "train_loss": [],
         "val_loss": []
     }
@@ -71,26 +69,21 @@ def train_model(
     for epoch in range(max_epochs):
         cumulative_train_loss = 0
         cumulative_train_corrects = 0
-
+        print(epoch)
         # Entrenamiento del modelo
         model.train()
         for i, (diff, y_batch) in enumerate(train_loader):
             # print('\r{}% complete'.format(np.round((epoch + 1)/(max_epochs)*100, decimals = 2)), end='')
-            diff = diff#.unsqueeze(1).permute(1,0,2,3)
+            # diff = diff#.unsqueeze(1).permute(1,0,2,3)
             #print(diff.shape, y_batch.shape)
             if use_gpu:
                 diff = diff.cuda()
-                y_batch = y_batch.cuda()
+                # y_batch = y_batch.cuda()
 
             # Predicción
-            y_predicted, mu, logvar, sigma = model(diff)
-            # y_predicted, mu, logvar, sigma = model(diff)
-
-            y_batch = y_batch.reshape(-1, 1).float()
-
-            # Cálculo de loss
-            # loss = criterion(y_predicted, y_batch, mu, logvar, sigma)
-
+            reconstruction, mu, logvar, sigma = model(diff)
+           
+            loss = criterion(reconstruction, diff, mu, logvar, sigma).mean()
             # Actualización de parámetros
             optimizer.zero_grad()
             loss.backward()
@@ -99,11 +92,11 @@ def train_model(
             cumulative_train_loss += loss.item()
 
             # Calculamos número de aciertos
-            class_prediction = (y_predicted > 0.5)
-            cumulative_train_corrects += (y_batch == class_prediction).sum()
+            # class_prediction = (y_predicted > 0.5)
+            # cumulative_train_corrects += (y_batch == class_prediction).sum()
 
         train_loss = cumulative_train_loss / len(train_loader)
-        train_acc = cumulative_train_corrects / len(train_dataset)
+        # train_acc = cumulative_train_corrects / len(train_dataset)
 
         # Evaluación del modelo
         model.eval()
@@ -112,23 +105,24 @@ def train_model(
             diff_val = diff_val.cuda()
             y_val = y_val.cuda()        
         
-        y_predicted = model(diff_val)[0]
-        y_val = y_val.reshape(-1, 1).float()
-        val_loss = criterion(y_predicted, y_val).item()
+        reconstruction, mu, logvar, sigma = model(diff)
+           
+        val_loss = criterion(reconstruction, diff, mu, logvar, sigma).item
 
-        class_prediction = (y_predicted > 0.5).long()
-        val_acc = (y_val == class_prediction).sum() / y_val.shape[0]
 
-        curves["train_acc"].append(train_acc.item())
-        curves["val_acc"].append(val_acc.item())
+        # class_prediction = (y_predicted > 0.5).long()
+        # val_acc = (y_val == class_prediction).sum() / y_val.shape[0]
+
+        # curves["train_acc"].append(train_acc.item())
+        # curves["val_acc"].append(val_acc.item())
         curves["train_loss"].append(train_loss)
         curves["val_loss"].append(val_loss)
 
-        print(f'\rEpoch {epoch + 1}/{max_epochs} - Train Loss: {train_loss:.4f} - Train Acc: {train_acc:.4f} - Val loss: {val_loss:.4f}, Val acc: {val_acc:.4f}', end='')
+        # print(f'\rEpoch {epoch + 1}/{max_epochs} - Train Loss: {train_loss:.4f} - Val loss: {val_loss:.4f}', end='')
         
-        if early_stopping(val_loss):
-            print(f'\rEpoch {epoch + 1}/{max_epochs} (Early Stop) - Train Loss: {train_loss:.4f} - Train Acc: {train_acc:.4f} - Val loss: {val_loss:.4f}, Val acc: {val_acc:.4f}', end='')
-            break
+        # if early_stopping(val_loss):
+        #     print(f'\rEpoch {epoch + 1}/{max_epochs} (Early Stop) - Train Loss: {train_loss:.4f} - Val loss: {val_loss:.4f}', end='')
+        #     break
 
     tiempo_ejecucion = time.perf_counter() - t0
     # print(f"Tiempo total de entrenamiento: {time.perf_counter() - t0:.4f} [s]")

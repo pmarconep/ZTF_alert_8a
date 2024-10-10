@@ -59,12 +59,12 @@ def plot_two_images(img1, img2):
     fig, ax = plt.subplots(1, 2, figsize=(10, 5))
     
     ax[0].imshow(img1)
-    ax[0].set_title('Image 1')
+    ax[0].set_title('Input')
     ax[0].set_xticks([])
     ax[0].set_yticks([])
     
     ax[1].imshow(img2)
-    ax[1].set_title('Image 2')
+    ax[1].set_title('Reconstructed')
     ax[1].set_xticks([])
     ax[1].set_yticks([])
     

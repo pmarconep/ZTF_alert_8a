@@ -2,12 +2,12 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.nn import functional as F
-
-class Encoder(nn.Module):
-    def __init__(self,latent_dim):
-        super(Encoder, self).__init__()
+    
+class VAE(nn.Module):
+    def __init__(self, latent_dim):
+        super(VAE, self).__init__()
         
-        self.layers = nn.Sequential(
+        self.encoder = nn.Sequential(
             nn.Conv2d(1, 64, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(),
@@ -25,24 +25,8 @@ class Encoder(nn.Module):
         
         self.fc_mu = nn.Linear(64*6*6, latent_dim)
         self.fc_logvar = nn.Linear(64*6*6, latent_dim)
-    
-    def reparametrize(self, mu, logvar):
-        std = torch.exp(0.5 * logvar)
-        eps = torch.randn_like(std)
-        return mu + eps * std
-    
-    def forward(self, x):
-        h = self.layers(x)
-        mu = self.fc_mu(h)
-        logvar = self.fc_logvar(h)
-        # return mu, logvar
-        return self.reparametrize(mu, logvar)
-
-class Decoder(nn.Module):
-    def __init__(self, latent_dim):
-        super(Decoder, self).__init__()
         
-        self.layers = nn.Sequential(
+        self.decoder = nn.Sequential(
             
             # FCL
             nn.Linear(latent_dim, 64*6*6),
@@ -86,5 +70,31 @@ class Decoder(nn.Module):
             nn.Conv2d(64, 1, kernel_size=3, stride=1, padding=1), # Tengo dudas con esta última capa
             nn.ReLU()            
         )
+        
+        self.fc_sigma = nn.Sequential(
+                nn.Linear(latent_dim, 36),
+                nn.ReLU(),
+                nn.Linear(36, 1),
+                nn.Sigmoid()  # Constrain variance to be between small positive values
+            )
+        
+    def reparametrize(self, mu, logvar):
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        return mu + eps * std
+    
     def forward(self, x):
-        return self.layers(x)   
+        
+        h = self.encoder(x)
+        mu = self.fc_mu(h)
+        logvar = self.fc_logvar(h)
+        z = self.reparametrize(mu, logvar)
+        sigma = self.fc_sigma(z)
+        reconstruction = self.decoder(z)
+        return reconstruction, mu, logvar, sigma
+    
+def loss_function(recon_x, x, mu, logvar, sigma):
+    recon_loss = F.mse_loss(recon_x, x, reduction='sum') / (2 * sigma) + torch.log(sigma)
+    # Kullback-Leibler divergence
+    kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    return recon_loss + kl_loss
