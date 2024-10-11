@@ -69,3 +69,48 @@ def plot_two_images(img1, img2):
     ax[1].set_yticks([])
     
     plt.show()
+    
+import torch
+def plot_train_example(models, dataset, gaussian_dataset):
+    sample = np.random.choice(len(dataset), len(models))
+    sample_gaus = np.random.choice(len(gaussian_dataset), len(models))
+    
+    fig, axes = plt.subplots(len(models), 4, figsize=(10, 15))
+    for j, model in enumerate(models):
+        img = dataset[sample[j]][0]  # Obtener la imagen original del dataset
+        img_gaus = gaussian_dataset[sample_gaus[j]][0].squeeze()
+        
+        # Mostrar la imagen original
+        axes[j, 0].imshow(img)
+        axes[j, 0].set_title(f'Original')
+        axes[j, 0].set_xticks([])
+        axes[j, 0].set_yticks([])
+        
+        axes[j, 2].imshow(img_gaus)
+        axes[j, 2].set_title(f'Gaussian')
+        axes[j, 2].set_xticks([])
+        axes[j, 2].set_yticks([])
+        
+        model.eval()
+        with torch.no_grad():
+            img_tensor = torch.tensor(img).unsqueeze(0).unsqueeze(0)  # Convertir la imagen a tensor
+            reconstructed_img = model(img_tensor)[0].squeeze().detach().numpy()
+            
+        with torch.no_grad():
+            gaus_tensor = torch.tensor(img_gaus).unsqueeze(0).unsqueeze(0)  # Convertir la imagen a tensor
+            reconstructed_gaus = model(gaus_tensor)[0].squeeze().detach().numpy()
+        
+        axes[j, 1].imshow(reconstructed_img)
+        axes[j, 1].set_title(f'Reconstructed')
+        axes[j, 1].set_xticks([])
+        axes[j, 1].set_yticks([])
+        
+        axes[j, 3].imshow(reconstructed_gaus)
+        axes[j, 3].set_title(f'Reconstructed Gaussian')
+        axes[j, 3].set_xticks([])
+        axes[j, 3].set_yticks([])
+
+        # Add a general title for each row
+        axes[j, 0].set_ylabel(f'Model {j}', fontsize=16, rotation=0, labelpad=50)
+
+    plt.show()

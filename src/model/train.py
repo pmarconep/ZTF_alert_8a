@@ -51,8 +51,8 @@ def train_model(
     # Definición de dataloader
     
     # Create DataLoaders
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=use_gpu)
-    val_loader = DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False, pin_memory=use_gpu)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=use_gpu)
+    val_loader = DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False, num_workers=0, pin_memory=use_gpu)
     # test_loader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False, pin_memory=use_gpu)
     
     # Optimizador
@@ -72,7 +72,6 @@ def train_model(
     for epoch in range(max_epochs):
         cumulative_train_loss = 0
         cumulative_train_corrects = 0
-        print(f'\rTraining model: epoch {epoch} out of {max_epochs}', end='')
         # Entrenamiento del modelo
         model.train()
         for i, (diff, y_batch) in enumerate(train_loader):
@@ -93,9 +92,10 @@ def train_model(
 
             cumulative_train_loss += loss.item()
             
-            if (i % (n_batches // 6) == 0) and (i > 0):
+            if i > 0:
+                if (i % (n_batches // 6) == 0):
 
-                print(f"\rEpoch {epoch + 1}/{max_epochs} -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {train_loss:4f}, Train acc: {train_acc:4f}", end='')
+                    print(f"\rEpoch {epoch + 1}/{max_epochs} -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {loss.item():4f}", end='')
 
             iteration += 1
 

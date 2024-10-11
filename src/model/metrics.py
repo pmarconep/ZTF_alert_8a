@@ -75,20 +75,20 @@ def show_curves(curves):
     plt.show()
     return fig
 
-def show_loss(curves1, curves2, curves3, curves4, curves5):
-    fig, ax = plt.subplots(1, 5, figsize=(32.5, 5))
+def show_loss(curves1, curves2, curves3, curves4, curves5, curvesGauss):
+    fig, ax = plt.subplots(1, 6, figsize=(32.5, 5))
     fig.set_facecolor('white')
 
-    epochs = np.arange(len(curves["val_loss"])) + 1
+    epochs = np.arange(len(curves1["val_loss"])) + 1
 
-    curves = [curves1, curves2, curves3, curves4, curves5]
+    curves = [curves1, curves2, curves3, curves4, curves5, curvesGauss]
     
-    for i in range(5):
+    for i in range(6):
         ax[i].plot(epochs, curves[i]['val_loss'], label='validation')
         ax[i].plot(epochs, curves[i]['train_loss'], label='training')
         ax[i].set_xlabel('Epoch')
         ax[i].set_ylabel('Loss')
-        ax[i].set_title(f'Loss evolution during training (Plot {i+1})')
+        ax[i].set_title(f'Loss evolution during training (Model {i})')
         ax[i].legend()
 
     plt.show()
