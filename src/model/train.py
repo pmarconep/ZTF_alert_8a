@@ -101,8 +101,6 @@ def train_model(
             augmented_data.append(v_flip_img)
             augmented_labels.append(label)
 
-            batch_size = 6 * batch_size
-
         print('Augmented data generated... starting training')
         print('\n\n')
         augmented_dataset = TensorDataset(torch.stack(augmented_data), torch.tensor(augmented_labels))
@@ -143,7 +141,7 @@ def train_model(
             # Predicción
             reconstruction, mu, logvar, sigma = model(diff)
            
-            loss = criterion(reconstruction, diff, mu, logvar, sigma).mean() / batch_size
+            loss = criterion(reconstruction, diff, mu, logvar, sigma).mean()
             # Actualización de parámetros
             optimizer.zero_grad()
             loss.backward()
@@ -174,7 +172,7 @@ def train_model(
         
         reconstruction, mu, logvar, sigma = model(diff)
            
-        val_loss = criterion(reconstruction, diff, mu, logvar, sigma)[0].mean().item() / len(val_dataset)
+        val_loss = criterion(reconstruction, diff, mu, logvar, sigma)[0].mean().item()
 
 
         # class_prediction = (y_predicted > 0.5).long()
