@@ -40,18 +40,76 @@ def train_model(
     criterion,
     batch_size,
     lr,
-    early_stopping_tolerance=15,
+    augmentation = False,
     use_gpu=False
 ):
     if use_gpu:
         model.cuda()
 
-    early_stopping = EarlyStopping(n_epochs_tolerance=early_stopping_tolerance)
-
     # Definición de dataloader
     
     # Create DataLoaders
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=use_gpu)
+
+    if augmentation:
+        augmented_data = []
+        augmented_labels = []
+        print(f'Augmenting Data...')
+        for i, (img, label) in enumerate(train_dataset):
+            augmented_data.append(img)
+            augmented_labels.append(label)
+
+            # Rotate 90 degrees
+            img_90 = torchvision.transforms.functional.rotate(img, 90)
+            augmented_data.append(img_90)
+            augmented_labels.append(label)
+            img_180 = torchvision.transforms.functional.rotate(img, 180)
+            augmented_data.append(img_180)
+            augmented_labels.append(label)
+            img_270 = torchvision.transforms.functional.rotate(img, 270)
+            augmented_data.append(img_270)
+            augmented_labels.append(label)
+
+            # Divide the image into 3x3 squares and randomly shuffle them
+            # img_np = np.array(img.permute(1, 2, 0))  # Convert to numpy array and move channels to last dimension
+            # h, w, c = img_np.shape
+            # square_size_h = h // 3
+            # square_size_w = w // 3
+
+            # squares = []
+            # for i in range(3):
+            #     for j in range(3):
+            #         square = img_np[i * square_size_h:(i + 1) * square_size_h, j * square_size_w:(j + 1) * square_size_w, :]
+            #         squares.append(square)
+
+            # np.random.shuffle(squares)
+
+            # shuffled_img_np = np.zeros_like(img_np)
+            # for i in range(3):
+            #     for j in range(3):
+            #         shuffled_img_np[i * square_size_h:(i + 1) * square_size_h, j * square_size_w:(j + 1) * square_size_w, :] = squares[i * 3 + j]
+
+            # shuffled_img = torch.tensor(shuffled_img_np).permute(2, 0, 1)  # Convert back to tensor and move channels to first dimension
+            # augmented_data.append(shuffled_img)
+            # augmented_labels.append(label)
+
+            h_flip_img = torchvision.transforms.functional.hflip(img)
+            augmented_data.append(h_flip_img)
+            augmented_labels.append(label)
+
+            # Vertical flip
+            v_flip_img = torchvision.transforms.functional.vflip(img)
+            augmented_data.append(v_flip_img)
+            augmented_labels.append(label)
+
+            batch_size = 6 * batch_size
+
+        print('Augmented data generated... starting training')
+        print('\n\n')
+        augmented_dataset = TensorDataset(torch.stack(augmented_data), torch.tensor(augmented_labels))
+        train_loader = DataLoader(augmented_dataset, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=use_gpu)
+    else:
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=use_gpu)
+
     val_loader = DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False, num_workers=0, pin_memory=use_gpu)
     # test_loader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False, pin_memory=use_gpu)
     
@@ -68,6 +126,7 @@ def train_model(
     
     iteration = 0
     n_batches = len(train_loader)
+    val_loss = 0
 
     for epoch in range(max_epochs):
         cumulative_train_loss = 0
@@ -95,7 +154,7 @@ def train_model(
             if i > 0:
                 if (i % (n_batches // 100) == 0):
 
-                    print(f"\rEpoch {epoch + 1}/{max_epochs} -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {loss.item():4f}", end='')
+                    print(f"\rEpoch {epoch + 1}/{max_epochs} -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {loss.item():4f} - Val loss: {val_loss:.4f}", end='')
 
             iteration += 1
 
@@ -115,7 +174,7 @@ def train_model(
         
         reconstruction, mu, logvar, sigma = model(diff)
            
-        val_loss = criterion(reconstruction, diff, mu, logvar, sigma)[0].mean().item()
+        val_loss = criterion(reconstruction, diff, mu, logvar, sigma)[0].mean().item() / len(val_dataset)
 
 
         # class_prediction = (y_predicted > 0.5).long()
@@ -126,7 +185,7 @@ def train_model(
         curves["train_loss"].append(train_loss)
         curves["val_loss"].append(val_loss)
 
-        # print(f'\rEpoch {epoch + 1}/{max_epochs} - Train Loss: {train_loss:.4f} - Val loss: {val_loss:.4f}', end='')
+        print(f"\rEpoch {epoch + 1}/{max_epochs} -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {loss.item():4f} - Val loss: {val_loss:.4f}", end='')
         
         # if early_stopping(val_loss):
         #     print(f'\rEpoch {epoch + 1}/{max_epochs} (Early Stop) - Train Loss: {train_loss:.4f} - Val loss: {val_loss:.4f}', end='')
