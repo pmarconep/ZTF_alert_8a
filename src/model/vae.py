@@ -83,8 +83,17 @@ class VAE(nn.Module):
         eps = torch.randn_like(std)
         return mu + eps * std
     
+    def only_encoder(self, x):
+        h = self.encoder(x)
+        mu = self.fc_mu(h)
+        logvar = self.fc_logvar(h)
+        z = self.reparametrize(mu, logvar)
+        return z
+    
+    def only_decoder(self, z):
+        return self.decoder(z)
+
     def forward(self, x):
-        
         h = self.encoder(x)
         mu = self.fc_mu(h)
         logvar = self.fc_logvar(h)
@@ -97,4 +106,4 @@ def loss_function(recon_x, x, mu, logvar, sigma):
     recon_loss = F.mse_loss(recon_x, x, reduction='sum') / (2 * sigma) + torch.log(sigma)
     # Kullback-Leibler divergence
     kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-    return recon_loss + kl_loss, recon_loss, kl_loss
+    return recon_loss + kl_loss

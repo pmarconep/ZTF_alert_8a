@@ -84,7 +84,7 @@ def train_model(
             # Predicción
             reconstruction, mu, logvar, sigma = model(diff)
            
-            loss = criterion(reconstruction, diff, mu, logvar, sigma).mean()
+            loss = criterion(reconstruction, diff, mu, logvar, sigma).mean()/batch_size
             # Actualización de parámetros
             optimizer.zero_grad()
             loss.backward()
@@ -93,7 +93,7 @@ def train_model(
             cumulative_train_loss += loss.item()
             
             if i > 0:
-                if (i % (n_batches // 6) == 0):
+                if (i % (n_batches // 20) == 0):
 
                     print(f"\rEpoch {epoch + 1}/{max_epochs} -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {loss.item():4f}", end='')
 
