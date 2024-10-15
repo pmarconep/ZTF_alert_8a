@@ -4,11 +4,11 @@ import torch.optim as optim
 from torch.nn import functional as F
     
 class VAE(nn.Module):
-    def __init__(self, latent_dim):
+    def __init__(self, latent_dim, n_channels):
         super(VAE, self).__init__()
         
         self.encoder = nn.Sequential(
-            nn.Conv2d(2, 64, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(n_channels, 64, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1),
@@ -67,8 +67,8 @@ class VAE(nn.Module):
             nn.ReLU(),  
             
             #6th Convolutional Layer
-            nn.Conv2d(64, 2, kernel_size=3, stride=1, padding=1), # Tengo dudas con esta última capa
-            nn.ReLU()            
+            nn.Conv2d(64, n_channels, kernel_size=3, stride=1, padding=1), # Tengo dudas con esta última capa
+            nn.ReLU()
         )
         
         self.fc_sigma = nn.Sequential(
