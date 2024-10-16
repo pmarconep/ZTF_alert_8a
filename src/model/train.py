@@ -129,6 +129,9 @@ def train_model(
     for epoch in range(max_epochs):
         cumulative_train_loss = 0
         cumulative_train_corrects = 0
+        train_loss_count = 0
+        train_acc_count = 0
+        
         # Entrenamiento del modelo
         model.train()
         for i, (diff, y_batch) in enumerate(train_loader):
@@ -140,7 +143,7 @@ def train_model(
 
             # Predicción
             reconstruction, mu, logvar, sigma = model(diff)
-           
+
             loss = criterion(reconstruction, diff, mu, logvar, sigma).mean()
             # Actualización de parámetros
             optimizer.zero_grad()
@@ -148,11 +151,14 @@ def train_model(
             optimizer.step()
 
             cumulative_train_loss += loss.item()
+            train_loss_count += 1
+            train_acc_count += reconstruction.shape[0]
             
             if i > 0:
                 if (i % (n_batches // 100) == 0):
+                    train_loss = cumulative_train_loss / train_loss_count
 
-                    print(f"\rEpoch {epoch + 1}/{max_epochs} -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {loss.item():4f} - Val loss: {val_loss:.4f}", end='')
+                    print(f"\rEpoch {epoch + 1}/{max_epochs} -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {train_loss:.4f} - Val loss: {val_loss:.4f}", end='')
 
             iteration += 1
 
@@ -160,8 +166,7 @@ def train_model(
             # class_prediction = (y_predicted > 0.5)
             # cumulative_train_corrects += (y_batch == class_prediction).sum()
 
-        train_loss = cumulative_train_loss / len(train_loader)
-        # train_acc = cumulative_train_corrects / len(train_dataset)
+        train_loss = cumulative_train_loss / train_loss_count
 
         # Evaluación del modelo
         model.eval()
@@ -170,9 +175,9 @@ def train_model(
             diff_val = diff_val.cuda()
             y_val = y_val.cuda()        
         
-        reconstruction, mu, logvar, sigma = model(diff)
+        reconstruction, mu, logvar, sigma = model(diff_val)
            
-        val_loss = criterion(reconstruction, diff, mu, logvar, sigma)[0].mean().item()
+        val_loss = criterion(reconstruction, diff_val, mu, logvar, sigma)[0].mean().item()
 
 
         # class_prediction = (y_predicted > 0.5).long()
