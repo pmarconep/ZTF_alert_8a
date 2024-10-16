@@ -93,3 +93,27 @@ def show_loss(curves1, curves2, curves3, curves4, curves5, curvesGauss):
 
     plt.show()
     return fig
+
+import umap
+
+def plot_umap(model, data, labels, n_neighbors, min_dist, metric, norm = True):
+    model.eval()
+
+    z = model.only_encoder(data).detach().numpy()
+    z_label = labels.detach().numpy()
+
+    if norm:
+        z = (z - z.mean(axis=0)) / z.std(axis=0)
+
+    reducer = umap.UMAP(n_neighbors=n_neighbors, min_dist=min_dist, metric=metric)
+    embedding = reducer.fit_transform(z)
+
+    colors = ['red', 'blue', 'green', 'purple', 'orange']
+
+    fig = plt.figure(figsize=(10, 8))
+    for i, color in enumerate(colors):
+        plt.scatter(embedding[z_label == i, 0], embedding[z_label == i, 1], c=color, label=f'Class {i}', s=5)
+    # plt.title(f'UMAP projection of the latent space of model {model.name}')
+    plt.legend()
+    plt.show()
+    return fig

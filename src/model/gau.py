@@ -1,4 +1,7 @@
+import torch
 from torch.utils.data import TensorDataset
+import numpy as np
+import matplotlib.pyplot as plt
 
 def generate_gaussian_image(size, center, sigma=1.0, noise_level=0.1, brightness=1.0, base_level=0.212):
     """Genera una imagen de tamaño `size` con una distribución gaussiana centrada en `center` 
