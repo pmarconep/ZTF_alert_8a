@@ -3,10 +3,12 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.nn import functional as F
     
-class VAE(nn.Module):
-    def __init__(self, latent_dim, n_channels):
-        super(VAE, self).__init__()
+class AE(nn.Module):
+    def __init__(self, latent_dim, n_channels, name):
+        super(AE, self).__init__()
         
+        self.name = name #for plotting purposes
+
         self.encoder = nn.Sequential(
             nn.Conv2d(n_channels, 64, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(64),
@@ -21,10 +23,8 @@ class VAE(nn.Module):
             nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.Flatten(),
+            nn.Linear(64*6*6, latent_dim)
         )
-        
-        self.bottle_neck = nn.Linear(64*6*6, latent_dim)
-        # self.fc_logvar = nn.Linear(64*6*6, latent_dim)
         
         self.decoder = nn.Sequential(
             
@@ -67,44 +67,21 @@ class VAE(nn.Module):
             nn.ReLU(),  
             
             #6th Convolutional Layer
-            nn.Conv2d(64, n_channels, kernel_size=3, stride=1, padding=1), # Tengo dudas con esta última capa
+            nn.Conv2d(64, n_channels, kernel_size=3, stride=1, padding=1),
             nn.ReLU()
         )
-        
-        # self.fc_sigma = nn.Sequential(
-        #         nn.Linear(latent_dim, 36),
-        #         nn.ReLU(),
-        #         nn.Linear(36, 1),
-        #         nn.Sigmoid()  # Constrain variance to be between small positive values
-        #     )
-        
-    def reparametrize(self, mu, logvar):
-        std = torch.exp(0.5 * logvar)
-        eps = torch.randn_like(std)
-        return mu + eps * std
-    
+
     def only_encoder(self, x):
-        h = self.encoder(x)
-        z = self.bottle_neck(h)
-        # logvar = self.fc_logvar(h)
-        # z = self.reparametrize(mu, logvar)
-        return z
+        return self.encoder(x)
     
     def only_decoder(self, z):
         return self.decoder(z)
 
     def forward(self, x):
-        h = self.encoder(x)
-        z = self.bottle_neck(h)
-        # logvar = self.fc_logvar(h)
-        # z = self.reparametrize(mu, logvar)
-        # sigma = self.fc_sigma(z)
-        # print(z.shape)
-        reconstruction = self.decoder(z)
+        z = self.only_encoder(x)
+        reconstruction = self.only_decoder(z)
         return reconstruction
     
 def loss_function(recon_x, x):
-    recon_loss = F.mse_loss(recon_x, x, reduction='mean') #/ (2 * sigma) + torch.log(sigma)
-    # Kullback-Leibler divergence
-    # kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-    return recon_loss #+ kl_loss
+    recon_loss = F.mse_loss(recon_x, x, reduction='mean')
+    return recon_loss
