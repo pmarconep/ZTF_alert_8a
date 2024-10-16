@@ -142,9 +142,9 @@ def train_model(
                 # y_batch = y_batch.cuda()
 
             # Predicción
-            reconstruction, mu, logvar, sigma = model(diff)
+            reconstruction = model(diff)
 
-            loss = criterion(reconstruction, diff, mu, logvar, sigma).mean()
+            loss = criterion(reconstruction, diff).mean()
             # Actualización de parámetros
             optimizer.zero_grad()
             loss.backward()
@@ -175,9 +175,9 @@ def train_model(
             diff_val = diff_val.cuda()
             y_val = y_val.cuda()        
         
-        reconstruction, mu, logvar, sigma = model(diff_val)
+        reconstruction = model(diff_val)
            
-        val_loss = criterion(reconstruction, diff_val, mu, logvar, sigma)[0].mean().item()
+        val_loss = criterion(reconstruction, diff_val).mean().item()
 
 
         # class_prediction = (y_predicted > 0.5).long()

@@ -23,8 +23,8 @@ class VAE(nn.Module):
             nn.Flatten(),
         )
         
-        self.fc_mu = nn.Linear(64*6*6, latent_dim)
-        self.fc_logvar = nn.Linear(64*6*6, latent_dim)
+        self.bottle_neck = nn.Linear(64*6*6, latent_dim)
+        # self.fc_logvar = nn.Linear(64*6*6, latent_dim)
         
         self.decoder = nn.Sequential(
             
@@ -71,12 +71,12 @@ class VAE(nn.Module):
             nn.ReLU()
         )
         
-        self.fc_sigma = nn.Sequential(
-                nn.Linear(latent_dim, 36),
-                nn.ReLU(),
-                nn.Linear(36, 1),
-                nn.Sigmoid()  # Constrain variance to be between small positive values
-            )
+        # self.fc_sigma = nn.Sequential(
+        #         nn.Linear(latent_dim, 36),
+        #         nn.ReLU(),
+        #         nn.Linear(36, 1),
+        #         nn.Sigmoid()  # Constrain variance to be between small positive values
+        #     )
         
     def reparametrize(self, mu, logvar):
         std = torch.exp(0.5 * logvar)
@@ -85,9 +85,9 @@ class VAE(nn.Module):
     
     def only_encoder(self, x):
         h = self.encoder(x)
-        mu = self.fc_mu(h)
-        logvar = self.fc_logvar(h)
-        z = self.reparametrize(mu, logvar)
+        z = self.bottle_neck(h)
+        # logvar = self.fc_logvar(h)
+        # z = self.reparametrize(mu, logvar)
         return z
     
     def only_decoder(self, z):
@@ -95,15 +95,16 @@ class VAE(nn.Module):
 
     def forward(self, x):
         h = self.encoder(x)
-        mu = self.fc_mu(h)
-        logvar = self.fc_logvar(h)
-        z = self.reparametrize(mu, logvar)
-        sigma = self.fc_sigma(z)
+        z = self.bottle_neck(h)
+        # logvar = self.fc_logvar(h)
+        # z = self.reparametrize(mu, logvar)
+        # sigma = self.fc_sigma(z)
+        # print(z.shape)
         reconstruction = self.decoder(z)
-        return reconstruction, mu, logvar, sigma
+        return reconstruction
     
-def loss_function(recon_x, x, mu, logvar, sigma):
-    recon_loss = F.mse_loss(recon_x, x, reduction='sum') / (2 * sigma) + torch.log(sigma)
+def loss_function(recon_x, x):
+    recon_loss = F.mse_loss(recon_x, x, reduction='mean') #/ (2 * sigma) + torch.log(sigma)
     # Kullback-Leibler divergence
-    kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-    return recon_loss + kl_loss
+    # kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    return recon_loss #+ kl_loss
