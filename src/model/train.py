@@ -125,6 +125,7 @@ def train_model(
         "val_loss": []
     }
 
+    model_loss = []
     #start training
     print('Starting training ...')
 
@@ -154,6 +155,10 @@ def train_model(
             cumulative_train_loss += loss.item()
             train_loss_count += 1
             
+            
+            batch_losses = loss.item() 
+            model_loss.append(batch_losses) 
+            
             if i > 0:
                 if (i % (n_batches // 100) == 0):
                     train_loss = cumulative_train_loss / train_loss_count
@@ -163,7 +168,7 @@ def train_model(
             iteration += 1
 
         train_loss = cumulative_train_loss / train_loss_count
-
+        
         # Evaluación del modelo
         model.eval()
         diff_val, y_val = next(iter(val_loader))
@@ -187,7 +192,8 @@ def train_model(
 
     tiempo_ejecucion = time.perf_counter() - t0
     print(f"Tiempo total de entrenamiento: {time.perf_counter() - t0:.2f} [s]\n")
-
+    
+    total_mse_loss = np.mean(np.array(model_loss))
     model.cpu()
 
     return curves, tiempo_ejecucion, total_mse_loss
