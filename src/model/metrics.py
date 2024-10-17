@@ -53,7 +53,7 @@ def conf_matrix_given_threshold(true_labels, prediction, threshold):
     return TN, FP, FN, TP
 
 def show_curves(curves, models):
-    fig, ax = plt.subplots(1, len(curves), figsize=((13/2)*len(curves), 5))
+    fig, ax = plt.subplots(1, len(curves), figsize=((13/2)*len(curves), 5), dpi = 300)
     fig.set_facecolor('white')
 
     epochs = np.arange(len(curves["val_loss"])) + 1
@@ -73,7 +73,7 @@ import umap
 
 def plot_umap(models, data, labels, n_neighbors, min_dist, metric, norm = True):
 
-    fig, ax = plt.subplots(1, len(models), figsize=((13/2)*len(models), 5))
+    fig, ax = plt.subplots(1, len(models), figsize=((13/2)*len(models), 5), dpi = 300)
     fig.set_facecolor('white')
 
     for i, model in enumerate(models):
@@ -97,4 +97,46 @@ def plot_umap(models, data, labels, n_neighbors, min_dist, metric, norm = True):
         plt.legend()
     
     plt.show()
+    return fig
+
+def plot_umap_lp(models, data, n_neighbors, min_dist, metric, norm = True):
+
+    fig, ax = plt.subplots(1, len(models), figsize=((13/2)*len(models), 5), dpi = 300)
+    fig.set_facecolor('white')
+
+    for i, model in enumerate(models):
+
+        model.eval()
+
+        z = model.only_encoder(data[i].tensors[0]).detach().numpy()
+        z_label = data[i].tensors[1].detach().numpy()
+
+        if norm:
+            z = (z - z.mean(axis=0)) / z.std(axis=0)
+
+        reducer = umap.UMAP(n_neighbors=n_neighbors, min_dist=min_dist, metric=metric)
+        embedding = reducer.fit_transform(z)
+
+        colors = ['red', 'blue', 'green', 'purple', 'orange']
+
+        for i, color in enumerate(colors):
+            ax[i].scatter(embedding[z_label == i, 0], embedding[z_label == i, 1], c=color, label=f'Class {i}', s=5)
+        ax[i].set_title(f'UMAP projection of the latent space of model {model.name}')
+        plt.legend()
+    
+    plt.show()
+    return fig
+
+import seaborn as sns
+
+def plot_matrix(models, matrix):
+
+    fig, ax = plt.subplots(1, len(models), figsize=((13/2)*len(models), 5), dpi = 300)
+
+    for i, model in enumerate(models):
+        sns.heatmap(matrix[i], ax=ax[i], fmt='d', cmap='Blues', cbar=False)
+        ax[i].set_xlabel('Predicted')
+        ax[i].set_ylabel('Real')
+        ax[i].set_title(f'Confusion matrix of linear probing for model {model.name}')
+    
     return fig
