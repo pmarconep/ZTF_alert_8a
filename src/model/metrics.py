@@ -50,7 +50,7 @@ def roc_curve(labels, probabilities):
 def conf_matrix_given_threshold(true_labels, prediction, threshold):
     probabilities_with_threshold = (prediction > threshold).long()
     TN, FP, FN, TP = confusion_matrix(true_labels, probabilities_with_threshold).ravel()
-    return TN, FP, FN, TP
+    return TP, FP, FN, TN
 
 def show_curves(curves, models):
     fig, ax = plt.subplots(1, len(curves), figsize=((13/2)*len(curves), 5), dpi = 300)
@@ -91,10 +91,14 @@ def plot_umap(models, data, labels, n_neighbors, min_dist, metric, norm = True):
 
         colors = ['red', 'blue', 'green', 'purple', 'orange']
 
-        for i, color in enumerate(colors):
-            ax[i].scatter(embedding[z_label == i, 0], embedding[z_label == i, 1], c=color, label=f'Class {i}', s=5)
+        unique_labels = np.unique(z_label)
+
+        for j, cls in enumerate(unique_labels):
+            ax[i].scatter(embedding[z_label == cls, 0], embedding[z_label == cls, 1], c=[colors[j]], label=f'Class {cls}', s=10)
+
+
         ax[i].set_title(f'UMAP projection of the latent space of model {model.name}')
-        plt.legend()
+        ax[i].legend()
     
     plt.show()
     return fig
@@ -108,21 +112,22 @@ def plot_umap_lp(models, data, n_neighbors, min_dist, metric, norm = True):
 
         model.eval()
 
-        z = model.only_encoder(data[i].tensors[0]).detach().numpy()
+        z_predicted = model(data[i].tensors[0]).detach().numpy()
         z_label = data[i].tensors[1].detach().numpy()
 
-        if norm:
-            z = (z - z.mean(axis=0)) / z.std(axis=0)
-
         reducer = umap.UMAP(n_neighbors=n_neighbors, min_dist=min_dist, metric=metric)
-        embedding = reducer.fit_transform(z)
+        embedding = reducer.fit_transform(z_predicted)
 
         colors = ['red', 'blue', 'green', 'purple', 'orange']
 
-        for i, color in enumerate(colors):
-            ax[i].scatter(embedding[z_label == i, 0], embedding[z_label == i, 1], c=color, label=f'Class {i}', s=5)
-        ax[i].set_title(f'UMAP projection of the latent space of model {model.name}')
-        plt.legend()
+        unique_labels = np.unique(z_label)
+
+        for j, cls in enumerate(unique_labels):
+            ax[i].scatter(embedding[z_label == cls, 0], embedding[z_label == cls, 1], c=[colors[j]], label=f'Class {cls}', s=10)
+
+
+        ax[i].set_title(f'UMAP projection of the latent space of model') #{model.name}')
+        ax[i].legend()
     
     plt.show()
     return fig
@@ -134,7 +139,7 @@ def plot_matrix(models, matrix):
     fig, ax = plt.subplots(1, len(models), figsize=((13/2)*len(models), 5), dpi = 300)
 
     for i, model in enumerate(models):
-        sns.heatmap(matrix[i], ax=ax[i], fmt='d', cmap='Blues', cbar=False)
+        sns.heatmap(matrix[i], annot=True, ax=ax[i], fmt='d', cmap='Blues', cbar=False)
         ax[i].set_xlabel('Predicted')
         ax[i].set_ylabel('Real')
         ax[i].set_title(f'Confusion matrix of linear probing for model {model.name}')

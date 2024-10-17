@@ -8,9 +8,10 @@ import numpy as np
 
 
 class LinearClassifier(nn.Module):
-    def __init__(self, latent_dim, num_classes):
+    def __init__(self, latent_dim, num_classes, name):
         super(LinearClassifier, self).__init__()
         self.linear = nn.Linear(latent_dim, num_classes)
+        self.name = name
         
     def forward(self, z):
         out = self.linear(z)
