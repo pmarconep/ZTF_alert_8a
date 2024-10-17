@@ -56,11 +56,11 @@ def show_curves(curves, models):
     fig, ax = plt.subplots(1, len(curves), figsize=((13/2)*len(curves), 5), dpi = 300)
     fig.set_facecolor('white')
 
-    epochs = np.arange(len(curves["val_loss"])) + 1
+    epochs = [np.arange(len(curve["val_loss"])) + 1 for curve in curves]
 
     for i, curve in enumerate(curves):
-        ax[i].plot(epochs, curve['val_loss'], label='validation')
-        ax[i].plot(epochs, curve['train_loss'], label='training')
+        ax[i].plot(epochs[i], curve['val_loss'], label='validation')
+        ax[i].plot(epochs[i], curve['train_loss'], label='training')
         ax[i].set_xlabel('Epoch')
         ax[i].set_ylabel('Loss')
         ax[i].set_title(f'Loss evolution during training model {models[i].name}')

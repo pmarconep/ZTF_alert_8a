@@ -20,19 +20,19 @@ def plot_example(models, test_dataset, n_examples = 2):
         
         for j in range(n_examples):
 
-            ax[i*n_examples+j, 0].imshow(imgs[j][0, :, :], cmap='grey')
+            ax[i*n_examples+j, 0].imshow(imgs[j][0, :, :], cmap='inferno')
             ax[i*n_examples+j, 0].set_xticks([])
             ax[i*n_examples+j, 0].set_yticks([])
 
-            ax[i*n_examples+j, 2].imshow(imgs[j][1, :, :], cmap='grey')
+            ax[i*n_examples+j, 2].imshow(imgs[j][1, :, :], cmap='inferno')
             ax[i*n_examples+j, 2].set_xticks([])
             ax[i*n_examples+j, 2].set_yticks([])
 
-            ax[i*n_examples+j, 1].imshow(reconstructed[j][0, :, :].detach().numpy(), cmap='grey')
+            ax[i*n_examples+j, 1].imshow(reconstructed[j][0, :, :].detach().numpy(), cmap='inferno')
             ax[i*n_examples+j, 1].set_xticks([])
             ax[i*n_examples+j, 1].set_yticks([])
 
-            ax[i*n_examples+j, 3].imshow(reconstructed[j][1, :, :].detach().numpy(), cmap='grey')
+            ax[i*n_examples+j, 3].imshow(reconstructed[j][1, :, :].detach().numpy(), cmap='inferno')
             ax[i*n_examples+j, 3].set_xticks([])
             ax[i*n_examples+j, 3].set_yticks([])
 
@@ -40,9 +40,9 @@ def plot_example(models, test_dataset, n_examples = 2):
         ax[i*n_examples+j, 0].set_ylabel(f'Model {model.name}', fontsize=35, rotation=90, labelpad=50, va='center')
         ax[i*n_examples+j, 0].yaxis.set_label_coords(-0.1, +1)
 
-    ax[0, 0].set_title(f'CH1', fontsize=30)
-    ax[0, 1].set_title(f'CH1 Recon.', fontsize=30)
-    ax[0, 2].set_title(f'CH2', fontsize=30)
-    ax[0, 3].set_title(f'CH2 Recon.', fontsize=30)
+        ax[i*n_examples, 0].set_title(f'CH1', fontsize=30)
+        ax[i*n_examples, 1].set_title(f'CH1 Recon.', fontsize=30)
+        ax[i*n_examples, 2].set_title(f'CH2', fontsize=30)
+        ax[i*n_examples, 3].set_title(f'CH2 Recon.', fontsize=30)
 
     plt.tight_layout(pad=1.0)
