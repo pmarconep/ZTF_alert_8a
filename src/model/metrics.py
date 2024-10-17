@@ -94,7 +94,7 @@ def plot_umap(models, data, labels, n_neighbors, min_dist, metric, norm = True):
         unique_labels = np.unique(z_label)
 
         for j, cls in enumerate(unique_labels):
-            ax[i].scatter(embedding[z_label == cls, 0], embedding[z_label == cls, 1], c=[colors(j)], label=f'Class {cls}', s=10)
+            ax[i].scatter(embedding[z_label == cls, 0], embedding[z_label == cls, 1], c=[colors[j]], label=f'Class {cls}', s=10)
 
 
         ax[i].set_title(f'UMAP projection of the latent space of model {model.name}')
