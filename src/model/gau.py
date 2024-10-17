@@ -41,33 +41,3 @@ def generate_gaussian_dataset(num_samples, image_size, border_margin=3, noise_le
     images = np.array(images)
     images = images[:, np.newaxis, :, :]  # Añadir una dimensión para el canal
     return torch.tensor(images, dtype=torch.float32)
-
-# Parámetros del dataset
-num_samples = 12800
-image_size = 21
-border_margin = 4
-noise_level = 0.1
-brightness = 0.7
-
-# Generar el dataset
-gaussian_images = generate_gaussian_dataset(num_samples, image_size, border_margin, noise_level, brightness)
-
-# Crear un TensorDataset
-gaussian_dataset = TensorDataset(gaussian_images)
-
-
-# Verificar el tamaño del dataset
-print(f"Dataset size: {len(gaussian_dataset)}")
-print(f"Image shape: {gaussian_dataset[0][0].shape}")
-
-# Visualizar algunas imágenes
-def show_images(dataset, num_images=5):
-    fig, axes = plt.subplots(1, num_images, figsize=(15, 3))
-    for i in range(num_images):
-        image = dataset[i][0].numpy().squeeze()  # Convertir a numpy y eliminar la dimensión del canal
-        axes[i].imshow(image)
-        axes[i].axis('off')
-    plt.show()
-
-# Mostrar 10 imágenes del dataset
-show_images(gaussian_dataset, num_images=5)
