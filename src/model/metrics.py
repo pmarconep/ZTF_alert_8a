@@ -14,11 +14,11 @@ def show_curves(curves, models):
     fig, ax = plt.subplots(1, len(curves), figsize=((13/2)*len(curves), 5), dpi = 300)
     fig.set_facecolor('white')
 
-    epochs = np.arange(len(curves["val_loss"])) + 1
+    epochs = [np.arange(len(curve["val_loss"])) + 1 for curve in curves]
 
     for i, curve in enumerate(curves):
-        ax[i].plot(epochs, curve['val_loss'], label='validation')
-        ax[i].plot(epochs, curve['train_loss'], label='training')
+        ax[i].plot(epochs[i], curve['val_loss'], label='validation')
+        ax[i].plot(epochs[i], curve['train_loss'], label='training')
         ax[i].set_xlabel('Epoch')
         ax[i].set_ylabel('Loss')
         ax[i].set_title(f'Loss evolution during training model {models[i].name}')
@@ -52,10 +52,10 @@ def plot_umap(models, data, labels, n_neighbors, min_dist, metric, norm = True):
         unique_labels = np.unique(z_label)
 
         for j, cls in enumerate(unique_labels):
-            ax[i].scatter(embedding[z_label == cls, 0], embedding[z_label == cls, 1], c=[colors[j]], label=f'Class {cls}', s=10)
+            ax[i].scatter(embedding[z_label == cls, 0], embedding[z_label == cls, 1], c=[colors[j]], label=f'Class {int(cls)}', s=10)
 
 
-        ax[i].set_title(f'UMAP projection of the latent space of model {model.name}')
+        ax[i].set_title(f'Latent space UMAP model {model.name}')
         ax[i].legend()
     
     plt.show()
@@ -81,10 +81,10 @@ def plot_umap_lp(models, data, n_neighbors, min_dist, metric, norm = True):
         unique_labels = np.unique(z_label)
 
         for j, cls in enumerate(unique_labels):
-            ax[i].scatter(embedding[z_label == cls, 0], embedding[z_label == cls, 1], c=[colors[j]], label=f'Class {cls}', s=10)
+            ax[i].scatter(embedding[z_label == cls, 0], embedding[z_label == cls, 1], c=[colors[j]], label=f'Class {int(cls)}', s=10)
 
 
-        ax[i].set_title(f'UMAP projection of the latent space of model') #{model.name}')
+        ax[i].set_title(f'Linear Probing UMAP model {model.name}')
         ax[i].legend()
     
     plt.show()
@@ -100,6 +100,6 @@ def plot_matrix(models, matrix):
         sns.heatmap(matrix[i], annot=True, ax=ax[i], fmt='d', cmap='Blues', cbar=False)
         ax[i].set_xlabel('Predicted')
         ax[i].set_ylabel('Real')
-        ax[i].set_title(f'Confusion matrix of linear probing for model {model.name}')
+        ax[i].set_title(f'Linear probing CM for model {model.name}')
     
     return fig
