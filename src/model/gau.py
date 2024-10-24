@@ -40,8 +40,6 @@ def generate_gaussian_dataset(num_samples, image_size, border_margin=3, noise_le
         images.append(image)
     images = np.array(images)
     images = images[:, np.newaxis, :, :]  # Añadir una dimensión para el canal
-<<<<<<< HEAD
+
     return torch.tensor(images, dtype=torch.float32)
-=======
-    return torch.tensor(images, dtype=torch.float32)
->>>>>>> 2877bf014ee6b7b4595f307a75a4935890734cc6
+
