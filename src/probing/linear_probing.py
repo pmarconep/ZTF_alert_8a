@@ -19,20 +19,15 @@ class LinearClassifier(nn.Module):
 
 def get_latent_features(models, train_dataset, val_dataset, test_dataset):
 
+    model = models[0]
+    
     train = np.empty(len(models), dtype=object)
     val = np.empty(len(models), dtype=object)
     test = np.empty(len(models), dtype=object)
 
-    for i, model in enumerate(models):
-        model.eval()
-
-        temp_train = TensorDataset(model.encoder(train_dataset.tensors[0]).detach(), train_dataset.tensors[1].detach())
-        temp_val = TensorDataset(model.encoder(val_dataset.tensors[0]).detach(), val_dataset.tensors[1].detach())
-        temp_test = TensorDataset(model.encoder(test_dataset.tensors[0]).detach(), test_dataset.tensors[1].detach())
-
-        train[i] = temp_train
-        val[i] = temp_val
-        test[i] = temp_test
+    train = TensorDataset(model.encoder(train_dataset.tensors[0]).detach(), train_dataset.tensors[1].detach())
+    val = TensorDataset(model.encoder(val_dataset.tensors[0]).detach(), val_dataset.tensors[1].detach())
+    test = TensorDataset(model.encoder(test_dataset.tensors[0]).detach(), test_dataset.tensors[1].detach())
 
     return train, val, test
 

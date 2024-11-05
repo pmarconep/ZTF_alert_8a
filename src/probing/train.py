@@ -6,7 +6,26 @@ import torchvision
 from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
 
-def train_model(
+class EarlyStopping:
+    def __init__(self, n_epochs_tolerance):
+        self.n_epochs_tolerance = n_epochs_tolerance
+        self.epochs_with_no_improvement = 0
+        self.best_loss = np.inf
+
+    def __call__(self, val_loss):
+        # En cada llamada aumentamos el número de épocas en que no hemos mejorado
+        self.epochs_with_no_improvement += 1
+
+        if val_loss <= self.best_loss:
+            # Si efectivamente mejoramos (menor loss de validación) reiniciamos el número de épocas sin mejora
+            self.best_loss = val_loss
+            self.epochs_with_no_improvement = 0
+
+        # Retornamos True si debemos detenernos y False si aún no
+        # Nos detenemos cuando el número de épocas sin mejora es mayor o igual que el número de épocas de tolerancia
+        return self.epochs_with_no_improvement >= self.n_epochs_tolerance
+
+def train_model(ae,
     model,
     train_dataset,
     val_dataset,
@@ -15,13 +34,17 @@ def train_model(
     criterion,
     batch_size,
     lr,
-    use_gpu=False
+    use_gpu=False,
+    early_stop=False
 ):
     if use_gpu:
         model.cuda()
 
     # Definición de dataloader
+    ae.eval()
     
+    if early_stop != False:
+        early_stopping = EarlyStopping(early_stop)
     # Create DataLoaders
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=use_gpu)
     val_loader = DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False, num_workers=0, pin_memory=use_gpu)
@@ -56,9 +79,12 @@ def train_model(
             if use_gpu:
                 batch_features = batch_features.cuda()
                 batch_labels = batch_labels.cuda()
+                
             batch_labels = batch_labels.long()
             # Predicción
-            reconstruction = model(batch_features)
+            
+            # print(ae.encoder(batch_features).shape)
+            reconstruction = model(ae.encoder(batch_features))
 
             # Calcular la pérdida de clasificación
             loss = criterion(reconstruction, batch_labels)
@@ -79,7 +105,7 @@ def train_model(
                     train_loss = cumulative_train_loss / train_loss_count
 
                     # Aquí `val_loss` debe calcularse previamente en un paso de validación
-                    print(f"\rEpoch {epoch + 1}/{max_epochs} -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {train_loss:.4f}", end='')
+                    print(f"\rEpoch {epoch + 1}/{max_epochs} -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {train_loss:.4f} - Val loss: {val_loss:.8f}", end='')
 
             iteration += 1
 
@@ -94,9 +120,9 @@ def train_model(
             batch_labels = batch_labels.cuda()
                     
         batch_labels = batch_labels.long()
-        
+        print(batch_features.shape)
         # Predicción del modelo
-        predictions = model(batch_features)
+        predictions = model(ae.encoder(batch_features))
 
         # Calcular la pérdida de clasificación (CrossEntropyLoss)
         
@@ -109,6 +135,11 @@ def train_model(
       
         curves["train_loss"].append(train_loss)
         curves["val_loss"].append(val_loss)
+        
+        if early_stop != False:
+            if early_stopping(val_loss):
+                print(f'\rEpoch {epoch + 1}/{max_epochs} (Early Stop) -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {loss.item():.8f} - Val loss: {val_loss:.8f}', end='')
+                break
 
         print(f"\rEpoch {epoch + 1}/{max_epochs} -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {loss.item():4f} - Val loss: {val_loss:.4f}", end='')
       
