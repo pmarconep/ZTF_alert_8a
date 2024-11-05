@@ -16,6 +16,9 @@ def show_curves(curves, models):
 
     epochs = [np.arange(len(curve["val_loss"])) + 1 for curve in curves]
 
+    if len(curves) == 1:
+        ax = [ax]
+
     for i, curve in enumerate(curves):
         ax[i].plot(epochs[i], curve['val_loss'], label='validation')
         ax[i].plot(epochs[i], curve['train_loss'], label='training')
@@ -33,6 +36,9 @@ def plot_umap(models, data, labels, n_neighbors, min_dist, metric, norm = True):
 
     fig, ax = plt.subplots(1, len(models), figsize=((13/2)*len(models), 5), dpi = 300)
     fig.set_facecolor('white')
+
+    if len(models) == 1:
+        ax = [ax]
 
     for i, model in enumerate(models):
 
@@ -52,40 +58,49 @@ def plot_umap(models, data, labels, n_neighbors, min_dist, metric, norm = True):
         unique_labels = np.unique(z_label)
 
         for j, cls in enumerate(unique_labels):
-            ax[i].scatter(embedding[z_label == cls, 0], embedding[z_label == cls, 1], c=[colors[j]], label=f'Class {int(cls)}', s=10)
+            ax[0].scatter(embedding[z_label == cls, 0], embedding[z_label == cls, 1], c=[colors[j]], label=f'Class {int(cls)}', s=10)
+            # ax[1].scatter(embedding[z == cls, 0], embedding[z == cls, 1], c=[colors[j]], label=f'Class {int(cls)}', s=10)
 
 
-        ax[i].set_title(f'Latent space UMAP model {model.name}')
-        ax[i].legend()
+        ax[0].set_title(f'Latent space UMAP model {model.name} (Real labels).')
+        ax[0].legend()
+
+        # ax[1].set_title(f'Latent space UMAP model {model.name} (Predicted labels).')
+        # ax[1].legend()
     
     plt.show()
     return fig
 
 def plot_umap_lp(models, data, n_neighbors, min_dist, metric, norm = True):
 
-    fig, ax = plt.subplots(1, len(models), figsize=((13/2)*len(models), 5), dpi = 300)
+    fig, ax = plt.subplots(2, len(models), figsize=((13/2)*len(models), 10), dpi = 300)
     fig.set_facecolor('white')
 
     for i, model in enumerate(models):
 
         model.eval()
 
-        z_predicted = model(data[i].tensors[0]).detach().numpy()
         z_label = data[i].tensors[1].detach().numpy()
+        z_predicted = model(data[i].tensors[0]).detach().numpy()
 
         reducer = umap.UMAP(n_neighbors=n_neighbors, min_dist=min_dist, metric=metric)
         embedding = reducer.fit_transform(z_predicted)
+        embedding_1 = reducer.fit_transform(z_label.reshape(-1, 1))
 
         colors = ['red', 'blue', 'green', 'purple', 'orange']
 
         unique_labels = np.unique(z_label)
 
         for j, cls in enumerate(unique_labels):
-            ax[i].scatter(embedding[z_label == cls, 0], embedding[z_label == cls, 1], c=[colors[j]], label=f'Class {int(cls)}', s=10)
+            ax[0].scatter(embedding[z_label == cls, 0], embedding[z_label == cls, 1], c=[colors[j]], label=f'Class {int(cls)}', s=10)
+            ax[1].scatter(embedding_1[z_label == cls, 0], embedding_1[z_label == cls, 1], c=[colors[j]], label=f'Class {int(cls)}', s=10)
 
 
-        ax[i].set_title(f'Linear Probing UMAP model {model.name}')
-        ax[i].legend()
+        ax[0].set_title(f'Linear Probing UMAP model {model.name} (Real labels).')
+        ax[0].legend()
+
+        ax[1].set_title(f'Linear Probing UMAP model {model.name} (Predicted labels).')
+        ax[1].legend()
     
     plt.show()
     return fig
