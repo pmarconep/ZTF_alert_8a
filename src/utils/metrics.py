@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 import matplotlib.pyplot as plt
 import torch
+import umap
 
 def performance_metrics(true_labels, prediction):
     precision, recall, f1, _ = precision_recall_fscore_support(true_labels, prediction, average= "macro")
@@ -27,7 +28,6 @@ def show_curves(curves, models):
     plt.show()
     return fig
 
-import umap
 
 def plot_umap(models, data, labels, n_neighbors, min_dist, metric, norm = True):
 
