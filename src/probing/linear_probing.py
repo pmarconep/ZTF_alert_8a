@@ -5,6 +5,7 @@ import torch
 import torchvision
 from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
+import torch.nn.functional as F
 
 
 class LinearClassifier(nn.Module):
@@ -30,5 +31,3 @@ def get_latent_features(models, train_dataset, val_dataset, test_dataset):
     test = TensorDataset(model.encoder(test_dataset.tensors[0]).detach(), test_dataset.tensors[1].detach())
 
     return train, val, test
-
-

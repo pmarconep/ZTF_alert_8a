@@ -76,7 +76,15 @@ class AE(nn.Module):
     
     def only_decoder(self, z):
         return self.decoder(z)
-
+    
+    def time_sequence(self, x):
+        batch_size, sequence_length, channels, height, width = x.size()
+        x = x.view(batch_size * sequence_length, channels, height, width)
+        z = self.encoder(x)
+        z = z.view(batch_size, sequence_length, -1)
+        z = z.view(batch_size, -1)
+        return z
+        
     def forward(self, x):
         z = self.only_encoder(x)
         reconstruction = self.only_decoder(z)

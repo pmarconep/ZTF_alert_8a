@@ -64,10 +64,10 @@ class AE_recurrent(nn.Module):
     def only_encoder(self, x):
         batch_size, sequence_length, channels, height, width = x.size()
         x = x.view(batch_size * sequence_length, channels, height, width)  # flatten sequences
-        print("x",x.size())
         z = self.encoder(x)
         z = z.view(batch_size, sequence_length, -1)  # reshape to (batch, seq_len, latent_dim)
-        print("z",z.size())
+        # Concatenate all sequence_length latent dimensions per batch item
+        z = z.view(batch_size, -1)  # reshape to (batch, sequence_length * latent_dim)
         return z
     
     def only_decoder(self, z):

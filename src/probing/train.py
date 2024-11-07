@@ -82,10 +82,9 @@ def train_model(ae,
                 
             batch_labels = batch_labels.long()
             # Predicción
-            
+
             # print(ae.encoder(batch_features).shape)
             reconstruction = model(ae.encoder(batch_features))
-
             # Calcular la pérdida de clasificación
             loss = criterion(reconstruction, batch_labels)
             
@@ -120,7 +119,6 @@ def train_model(ae,
             batch_labels = batch_labels.cuda()
                     
         batch_labels = batch_labels.long()
-        print(batch_features.shape)
         # Predicción del modelo
         predictions = model(ae.encoder(batch_features))
 
