@@ -13,23 +13,19 @@ class RNN(nn.Module):
         self.num_layers = num_layers
         self.n_stamps = n_stamps
 
-        self.rnn = nn.LSTM(input_size=latent_dim*n_stamps, hidden_size=hidden_dim, num_layers=num_layers, batch_first=True)
-        self.fc1 = nn.Linear(hidden_dim, latent_dim*n_stamps)
+        self.rnn = nn.LSTM(input_size=latent_dim, hidden_size=hidden_dim, num_layers=num_layers, batch_first=True)
+        self.fc1 = nn.Linear(hidden_dim, latent_dim)
         self.dropout = nn.Dropout(0.5) # Valor "arbitrario"
-        self.fc2 = nn.Linear(latent_dim*n_stamps, latent_dim*n_stamps)
-        self.fc3 = nn.Linear(latent_dim*n_stamps, num_class)
+        self.fc3 = nn.Linear(latent_dim, num_class)
 
 
     def forward(self, x):
-        x = x.view(-1, self.n_stamps, self.latent_dim)
         x, _ = self.rnn(x)
         x = x[:,-1,:]
         x = F.relu(self.fc1(x))
         x = self.dropout(x)
-        x = F.relu(self.fc2(x))
         x = self.fc3(x)
-        output = F.softmax(x, dim=1)
-        return output
+        return x
 
 
     

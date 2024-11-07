@@ -67,7 +67,7 @@ def augment_data(dataset, batch_size, use_gpu, shuffle = False):
     return train_loader
 
 
-def train_model(
+def train_model(ae,
     model,
     train_dataset,
     val_dataset,
@@ -118,14 +118,12 @@ def train_model(
      
         # Entrenamiento del modelo
         model.train()
-        for i, (diff, y_batch) in enumerate(train_loader):
-            if use_gpu:
-                diff = diff.cuda()
-            print(diff.shape)
+        for i, (img, y_batch) in enumerate(train_loader):
 
-            reconstruction = model.decoder(diff)
+            lat_spc = ae.time_sequence(img)
+            prediction = model(lat_spc)
 
-            loss = criterion(reconstruction, diff).mean()
+            loss = criterion(prediction, y_batch.long())
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -149,15 +147,13 @@ def train_model(
         
         # Evaluación del modelo
         model.eval()
-        diff_val, y_val = next(iter(val_loader))
-        if use_gpu:
-            diff_val = diff_val.cuda()
-            y_val = y_val.cuda()        
-        
-        reconstruction = model(diff_val)
-           
-        val_loss = criterion(reconstruction, diff_val).mean().item()
+        img_val, y_val = next(iter(val_loader))
 
+        lat_spc_val = ae.time_sequence(img_val)
+        prediction_val = model(lat_spc_val)
+
+        val_loss = criterion(prediction_val, y_val.long())      
+                   
         curves["train_loss"].append(train_loss)
         curves["val_loss"].append(val_loss)
 
@@ -171,7 +167,7 @@ def train_model(
     tiempo_ejecucion = time.perf_counter() - t0
     print(f"Tiempo total de entrenamiento: {time.perf_counter() - t0:.2f} [s]\n")
     
-    total_mse_loss = np.mean(np.array(model_loss))
+
     model.cpu()
 
-    return curves, tiempo_ejecucion, total_mse_loss
+    return curves, tiempo_ejecucion, 

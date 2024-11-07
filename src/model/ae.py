@@ -82,7 +82,6 @@ class AE(nn.Module):
         x = x.view(batch_size * sequence_length, channels, height, width)
         z = self.encoder(x)
         z = z.view(batch_size, sequence_length, -1)
-        z = z.view(batch_size, -1)
         return z
         
     def forward(self, x):
