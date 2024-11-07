@@ -5,7 +5,8 @@ import time
 import torch
 from torch import nn
 import torchvision
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import TensorDataset, DataLoader, WeightedRandomSampler
+
 import torch.nn.functional as F
 
 from matplotlib import pyplot as plt
@@ -76,6 +77,8 @@ def train_model(ae,
     criterion,
     batch_size,
     lr,
+    weights=None,
+    random_sampler = False,
     augmentation = False,
     shuffle_augmentation = False,
     early_stop = False,
@@ -84,6 +87,7 @@ def train_model(ae,
     #setup
     if use_gpu:
         model.cuda()
+        ae.cuda()
 
     if early_stop != False:
         early_stopping = EarlyStopping(early_stop)
@@ -92,6 +96,16 @@ def train_model(ae,
         train_loader = augment_data(train_dataset, batch_size, use_gpu, shuffle = shuffle_augmentation)
     else:
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=use_gpu)
+        
+    if random_sampler:
+        class_counts = torch.bincount(train_dataset.tensors[1].long())
+        class_weights = 1. / class_counts.float()
+        weights = class_weights[train_dataset.tensors[1].long()]
+        
+        sampler = WeightedRandomSampler(weights, len(weights))
+        
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=sampler, num_workers=0, pin_memory=use_gpu)
+
 
     val_loader = DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False, num_workers=0, pin_memory=use_gpu)  
   
@@ -119,11 +133,14 @@ def train_model(ae,
         # Entrenamiento del modelo
         model.train()
         for i, (img, y_batch) in enumerate(train_loader):
-
+            
+            if use_gpu:
+                img, y_batch = img.cuda(), y_batch.cuda()
+            
             lat_spc = ae.time_sequence(img)
             prediction = model(lat_spc)
 
-            loss = criterion(prediction, y_batch.long())
+            loss = criterion(prediction, y_batch.long(), weights = weights)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -147,12 +164,15 @@ def train_model(ae,
         
         # Evaluación del modelo
         model.eval()
+        
         img_val, y_val = next(iter(val_loader))
+        if use_gpu:
+            img_val, y_val = img_val.cuda(), y_val.cuda()
 
         lat_spc_val = ae.time_sequence(img_val)
         prediction_val = model(lat_spc_val)
 
-        val_loss = criterion(prediction_val, y_val.long())      
+        val_loss = criterion(prediction_val, y_val.long(), weights = weights)      
                    
         curves["train_loss"].append(train_loss)
         curves["val_loss"].append(val_loss)
@@ -165,7 +185,7 @@ def train_model(ae,
                 break
 
     tiempo_ejecucion = time.perf_counter() - t0
-    print(f"Tiempo total de entrenamiento: {time.perf_counter() - t0:.2f} [s]\n")
+    print(f"\nTiempo total de entrenamiento: {time.perf_counter() - t0:.2f} [s]\n")
     
 
     model.cpu()
