@@ -51,30 +51,7 @@ def augment_data(dataset, batch_size, use_gpu, shuffle = False):
         augmented_data.append(img_270)
         augmented_labels.append(label)
 
-        #Divide the image into 3x3 squares and randomly shuffle them
-        if shuffle:
-            img_np = np.array(img.permute(1, 2, 0))  # Convert to numpy array and move channels to last dimension
-            h, w, c = img_np.shape
-            square_size_h = h // 3
-            square_size_w = w // 3
-
-            squares = []
-            for i in range(3):
-                for j in range(3):
-                    square = img_np[i * square_size_h:(i + 1) * square_size_h, j * square_size_w:(j + 1) * square_size_w, :]
-                    squares.append(square)
-
-            np.random.shuffle(squares)
-
-            shuffled_img_np = np.zeros_like(img_np)
-            for i in range(3):
-                for j in range(3):
-                    shuffled_img_np[i * square_size_h:(i + 1) * square_size_h, j * square_size_w:(j + 1) * square_size_w, :] = squares[i * 3 + j]
-
-            shuffled_img = torch.tensor(shuffled_img_np).permute(2, 0, 1)  # Convert back to tensor and move channels to first dimension
-            augmented_data.append(shuffled_img)
-            augmented_labels.append(label)
-
+        # Horizontal flip
         h_flip_img = torchvision.transforms.functional.hflip(img)
         augmented_data.append(h_flip_img)
         augmented_labels.append(label)
@@ -146,7 +123,7 @@ def train_model(
                 diff = diff.cuda()
             print(diff.shape)
 
-            reconstruction = model(diff)
+            reconstruction = model.decoder(diff)
 
             loss = criterion(reconstruction, diff).mean()
             optimizer.zero_grad()

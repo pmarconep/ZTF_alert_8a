@@ -112,9 +112,9 @@ def plot_matrix(models, matrix):
     fig, ax = plt.subplots(1, len(models), figsize=((13/2)*len(models), 5), dpi = 300)
 
     for i, model in enumerate(models):
-        sns.heatmap(matrix[i], annot=True, ax=ax[i], fmt='d', cmap='Blues', cbar=False)
-        ax[i].set_xlabel('Predicted')
-        ax[i].set_ylabel('Real')
-        ax[i].set_title(f'Linear probing CM for model {model.name}')
+        sns.heatmap(matrix[i], annot=True, ax=ax, fmt='d', cmap='Blues', cbar=False)
+        ax.set_xlabel('Predicted')
+        ax.set_ylabel('Real')
+        ax.set_title(f'Linear probing CM for model {model.name}')
     
     return fig
