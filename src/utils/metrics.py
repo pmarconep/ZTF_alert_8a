@@ -113,6 +113,8 @@ def plot_matrix(models, matrix):
 
     for i, model in enumerate(models):
         sns.heatmap(matrix[i], annot=True, ax=ax, fmt='d', cmap='Blues', cbar=False)
+        ax.set_xticklabels(['AGN', 'SNe', 'VS'])
+        ax.set_yticklabels(['AGN', 'SNe', 'VS'])
         ax.set_xlabel('Predicted')
         ax.set_ylabel('Real')
         ax.set_title(f'Linear probing CM for model {model.name}')
