@@ -21,14 +21,12 @@ def show_curves(curves, models):
         ax = [ax]
 
     for i, curve in enumerate(curves):
-        ax[i].plot(epochs[i], curve['val_loss'], label='validation')
-        ax[i].plot(epochs[i], curve['train_loss'], label='training')
+        ax[i].plot(epochs[i], curve['val_loss'].detach().numpy(), label='validation')
+        ax[i].plot(epochs[i], curve['train_loss'].detach().numpy(), label='training')
         ax[i].set_xlabel('Epoch')
         ax[i].set_ylabel('Loss')
         ax[i].set_title(f'Loss evolution during training model {models[i].name}')
         ax[i].legend()
-
-    plt.show()
     return fig
 
 

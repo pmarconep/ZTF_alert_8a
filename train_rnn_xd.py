@@ -89,11 +89,27 @@ train_dataset = TensorDataset(train_dataset, train_class_0)
 validation_dataset = TensorDataset(validation_dataset, validation_class_0)
 test_dataset = TensorDataset(test_dataset, test_class_0)
 
-# Verificar las dimensiones de los conjuntos de datos
-print(train_dataset.tensors[0].shape)  # (samples, 5, 3, 21, 21)
-print(validation_dataset.tensors[0].shape)
-print(test_dataset.tensors[0].shape)
+train_dataset.tensors[1]
+unique, counts = torch.unique(train_dataset.tensors[1], return_counts=True)
+print(dict(zip(unique.numpy(), counts.numpy())))
 
+from torch.utils.data import Subset
+
+# Get the indices of each class
+class_indices = {cls: (train_dataset.tensors[1] == cls).nonzero(as_tuple=True)[0] for cls in unique}
+
+# Find the minimum number of samples in any class
+min_samples = min(len(indices) for indices in class_indices.values())
+
+# Create balanced indices by sampling min_samples from each class
+balanced_indices = torch.cat([indices[:min_samples] for indices in class_indices.values()])
+
+# Create a balanced dataset
+balanced_train_dataset = Subset(train_dataset, balanced_indices)
+
+# Verify the balance
+balanced_counts = torch.unique(balanced_train_dataset.dataset.tensors[1][balanced_indices], return_counts=True)
+print(dict(zip(balanced_counts[0].numpy(), balanced_counts[1].numpy())))
 
 
 # %%
@@ -106,24 +122,66 @@ model.load_state_dict(torch.load('models/model_final.pth'))
 model.eval()
 
 
-hidden_dim = 5
-num_layers = 1
+hidden_dim = 64
+num_layers = 2
+lr = 0.666e-3
+batch_size = 1
+use_gpu = False
 
-rnn_model = rnn.RNN(5, 50, hidden_dim, num_layers, 3, name = "RNN_test")
+rnn_model_gru = rnn.RNN('GRU', 5, 50, hidden_dim, num_layers, 3, name = "GRU")
+rnn_model_lstm = rnn.RNN('LSTM', 5, 50, hidden_dim, num_layers, 3, name = "LSTM")
+rnn_model_rnn = rnn.RNN('RNN', 5, 50, hidden_dim, num_layers, 3, name = "RNN")
 
-curves, time_i = train_recurrent.train_model(model,
-                                             rnn_model,
-                                             train_dataset,
+curves_1, time_1 = train_recurrent.train_model(model,
+                                             rnn_model_rnn,
+                                             balanced_train_dataset,
                                              validation_dataset,
                                              test_dataset, 
                                              max_epochs=100, 
-                                             batch_size=10,
-                                             lr=1e-3, 
-                                             early_stop=5,
-                                             criterion=rnn.loss_function
+                                             batch_size=batch_size,
+                                             lr=lr, 
+                                             early_stop=10,
+                                             criterion=rnn.loss_function,
+                                             use_gpu=use_gpu
                                              )
 
-torch.save(rnn_model.state_dict(), 'models/rnn_model_final.pth')
+torch.save(rnn_model_rnn.state_dict(), 'models/rnn_rnn_model_final.pth')
+fig1 = metrics.show_curves([curves_1.detach().numpy()], [rnn_model_rnn])
+fig1.savefig('figures/rnn_rnn_model_final.png')
+
+curves_2, time_2 = train_recurrent.train_model(model,
+                                             rnn_model_lstm,
+                                             balanced_train_dataset,
+                                             validation_dataset,
+                                             test_dataset, 
+                                             max_epochs=100, 
+                                             batch_size=batch_size,
+                                             lr=lr, 
+                                             early_stop=10,
+                                             criterion=rnn.loss_function,
+                                             use_gpu=use_gpu
+                                             )
+
+torch.save(rnn_model_lstm.state_dict(), 'models/rnn_lstm_model_final.pth')
+fig2 = metrics.show_curves([curves_2.detach().numpy()], [rnn_model_lstm])
+fig2.savefig('figures/rnn_lstm_model_final.png')
+
+curves_3, time_3 = train_recurrent.train_model(model,
+                                                rnn_model_gru,
+                                                balanced_train_dataset,
+                                                validation_dataset,
+                                                test_dataset, 
+                                                max_epochs=100, 
+                                                batch_size=batch_size,
+                                                lr=lr, 
+                                                early_stop=10,
+                                                criterion=rnn.loss_function,
+                                                use_gpu=use_gpu
+                                                )
+
+torch.save(rnn_model_gru.state_dict(), 'models/rnn_gru_model_final.pth')
+fig3 = metrics.show_curves([curves_3.detach().numpy()], [rnn_model_gru])
+fig3.savefig('figures/rnn_gru_model_final.png')
 # %%
 
 
