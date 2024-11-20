@@ -60,6 +60,7 @@ def train_final_model(model,
                       train_dataset,
                       validation_dataset,
                       criterion,
+                      alpha,
                       max_epochs,
                       max_time,
                       batch_size,
@@ -123,21 +124,65 @@ def train_final_model(model,
         train_loss_count = 0
 
         model.train()
-        for i, (img, ybatch) in enumerate(train_loader):
+        for i, (img, y_batch) in enumerate(train_loader):
 
+            if use_gpu:
+                    img, y_batch = img.cuda(), y_batch.cuda()
 
+            lat_spc = model.encoder(img)
+            predictions, mid_lat_spc = model.classifier(lat_spc)
+            reconstruction = model.decoder(mid_lat_spc)
 
+            loss = criterion(reconstruction, img, predictions, y_batch, alpha = alpha)
 
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            cumulative_train_loss += loss.item()
+            train_loss_count += 1
+
+            batch_losses = loss.item() 
+            model_loss.append(batch_losses)
+
+            if i > 0:
+                if (i % (n_batches // 100) == 0):
+                    train_loss = cumulative_train_loss / train_loss_count
+
+                    print(f"\r({((time.perf_counter() - t_i)/60):.2f}s) Epoch {epoch + 1}/{max_epochs} -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {train_loss:.8f} - Val loss: {val_loss:.8f}", end='')
+
+            iteration += 1
+
+        train_loss = cumulative_train_loss / train_loss_count
+
+        #evaluation
+        model.eval()
+
+        img_val, y_val = next(iter(validation_loader))
+
+        if use_gpu:
+            img_val, y_val = img_val.cuda(), y_val.cuda()
+
+        lat_spc_val = model.encoder(img_val)
+        predictions_val, mid_lat_spc_val = model.classifier(lat_spc_val)
+        reconstruction_val = model.decoder(mid_lat_spc_val)
+
+        val_loss = criterion(reconstruction_val, img_val, predictions_val, y_val, alpha = alpha)      
+                   
+        curves["train_loss"].append(train_loss)
+        curves["val_loss"].append(val_loss)
+
+        print(f"\r({((time.perf_counter() - t_i)/60):.2f}s) Epoch {epoch + 1}/{max_epochs} -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {loss.item():.8f} - Val loss: {val_loss:.8f}", end='')
 
         if early_stop != False:
             if early_stopping(val_loss):
-                print(f'\rEpoch {epoch + 1}/{max_epochs} (Early Stop) -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {loss.item():.8f} - Val loss: {val_loss:.8f}', end='')
+                print(f'\r({((time.perf_counter() - t_i)/60):.2f}s) Epoch {epoch + 1}/{max_epochs} (Early Stop) -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {loss.item():.8f} - Val loss: {val_loss:.8f}', end='')
                 break
 
         if (time.perf_counter() - t_i)/60 > max_time:
-            print(f'\rEpoch {epoch + 1}/{max_epochs} (Max time) -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {loss.item():.8f} - Val loss: {val_loss:.8f}', end='')
+            print(f'\r({((time.perf_counter() - t_i)/60):.2f}s) Epoch {epoch + 1}/{max_epochs} (Max time) -- Iteration {iteration} - Batch {i}/{len(train_loader)} - Train loss: {loss.item():.8f} - Val loss: {val_loss:.8f}', end='')
             break
 
-
+    model.cpu()
     
-    return
+    return curves

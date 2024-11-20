@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-class FinalModel(nn.module):
+class FinalModel(nn.Module):
     def __init__(self, latent_dim, n_channels, rnn_type, hidden_dim, num_layers, n_classes, name = 'None', description = 'None'):
         super(FinalModel, self).__init__()
 
@@ -88,10 +88,10 @@ class FinalModel(nn.module):
     def classifier(self, x):
         x, _ = self.rnn(x)
         x = x[:,-1,:]
-        x = nn.functional.relu(self.fc1(x))
-        x = self.dropout(x)
+        mid_lat_spc = nn.functional.relu(self.fc1(x))
+        x = self.dropout(mid_lat_spc)
         x = self.fc3(x)
-        return x
+        return x, mid_lat_spc
     
 
     #completo
@@ -108,9 +108,12 @@ def ae_loss_function(recon_x, x):
     recon_loss = nn.functional.mse_loss(recon_x, x, reduction='mean')
     return recon_loss
 
-def rnn_loss_function(predictions, labels, weights=None):
-    if weights != None:
-        criterion = nn.CrossEntropyLoss(weight=weights)
+def rnn_loss_function(predictions, labels):
     criterion = nn.CrossEntropyLoss()
     loss = criterion(predictions, labels)
     return loss
+
+def combined_loss_function(recon_x, x, predictions, labels, alpha=0.5):
+    recon_loss = nn.functional.mse_loss(recon_x, x, reduction='mean')
+    class_loss = nn.CrossEntropyLoss()(predictions, labels)
+    return alpha * recon_loss + (1 - alpha) * class_loss
