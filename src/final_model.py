@@ -13,6 +13,9 @@ class FinalModel(nn.Module):
         assert type(n_channels) == int, "Number of channels must be an int"
         assert n_channels > 0, "Number of channels must be grater than 0"
 
+        self.n_channels = n_channels
+        self.latent_dim = latent_dim
+
         #encoder
         self.encoder = nn.Sequential(
             nn.Conv2d(n_channels, 64, kernel_size=3, stride=1, padding=1),
@@ -79,25 +82,37 @@ class FinalModel(nn.Module):
         return self.decoder(z)
     
     def reconstruction(self, x):
-        z = self.only_encoder(x)
+        z = self.only_encoder(x.view(-1, self.n_channels, 21, 21))
         reconstruction = self.only_decoder(z)
         return reconstruction
     
 
     #rnn
-    def classifier(self, x):
-        x, _ = self.rnn(x)
+    def rnn_encode(self, x):
+        size = x.shape[0]
+        x = self.encoder(x.view(-1, self.n_channels, 21, 21))
+        x, _ = self.rnn(x.view(size, 5, self.latent_dim))
         x = x[:,-1,:]
         mid_lat_spc = nn.functional.relu(self.fc1(x))
-        x = self.dropout(mid_lat_spc)
+        reconstruction = self.only_decoder(mid_lat_spc)
+        return reconstruction
+
+    def rnn_classifier(self, x):
+        size = x.shape[0]
+        x = self.encoder(x.view(-1, self.n_channels, 21, 21))
+        x, _ = self.rnn(x.view(size, 5, self.latent_dim))
+        x = x[:,-1,:]
+        x = nn.functional.relu(self.fc1(x))
+        x = self.dropout(x)
         x = self.fc3(x)
-        return x, mid_lat_spc
+        return x
     
 
     #completo
     def forward(self, x):
-        z = self.only_encoder(x)
-        z, _ = self.rnn(z)
+        batch_length = x.shape[0]
+        z = self.only_encoder(x.view(-1, 3, 21, 21))
+        z, _ = self.rnn(z.view(batch_length, 5, 50))
         z = z[:,-1,:]
         z = nn.functional.relu(self.fc1(z))
         z = self.dropout(z)
