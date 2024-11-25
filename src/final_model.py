@@ -92,9 +92,10 @@ class FinalModel(nn.Module):
         size = x.shape[0]
         x = self.encoder(x.view(-1, self.n_channels, 21, 21))
         x, _ = self.rnn(x.view(size, 5, self.latent_dim))
-        x = x[:,-1,:]
-        mid_lat_spc = nn.functional.relu(self.fc1(x))
-        reconstruction = self.only_decoder(mid_lat_spc)
+        # x = x.view(5*size, self.latent_dim)
+        lat = nn.functional.relu(self.fc1(x))
+        mid_lat = self.dropout(lat)
+        reconstruction = self.only_decoder(mid_lat.view(-1, self.latent_dim))
         return reconstruction
 
     def rnn_classifier(self, x):

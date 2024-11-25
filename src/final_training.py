@@ -53,12 +53,35 @@ def train_final_model(model,
                       batch_size,
                       learning_rate,
                       random_sampler = True,
+                      only_classifier = True,
                       augmentation = True,
                       early_stop = True,
                       use_gpu = True,
                       num_cpu = 0):
 
     #setup
+
+    if stage=='ae_alone':
+        pass
+
+    elif stage=='ae_rnn':
+        for name, param in model.named_parameters():
+            if 'fc3' in name:
+                param.requires_grad = False
+            else:
+                param.requires_grad = True
+
+    elif stage=='rnn':
+        if only_classifier:
+            for name, param in model.named_parameters():
+                if 'fc3' not in name:
+                    param.requires_grad = False
+                else:
+                    param.requires_grad = True
+
+    for name, param in model.named_parameters():
+        print(f'{name}: {param.requires_grad}')
+
     if use_gpu:
         model = model.cuda()
 
@@ -112,7 +135,7 @@ def train_final_model(model,
 
             elif stage == 'ae_rnn':
                 reconstruction = model.rnn_encode(img)
-                loss = ae_criterion(reconstruction, img[:, 4, :, :, :])
+                loss = ae_criterion(reconstruction, img.view(-1, model.n_channels, 21, 21))
 
             elif stage == 'rnn':
                 prediction = model.rnn_classifier(img)
@@ -157,7 +180,7 @@ def train_final_model(model,
 
             elif stage == 'ae_rnn':
                 reconstruction_val = model.rnn_encode(img_val)
-                val_loss = ae_criterion(reconstruction_val, img_val[:, 4, :, :, :])
+                val_loss = ae_criterion(reconstruction_val, img_val.view(-1, model.n_channels, 21, 21))
 
             elif stage == 'rnn':
                 prediction_val = model.rnn_classifier(img_val)
