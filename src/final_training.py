@@ -78,6 +78,10 @@ def train_final_model(model,
                     param.requires_grad = False
                 else:
                     param.requires_grad = True
+        else:
+            for name, param in model.named_parameters():
+                param.requires_grad = True
+                
 
     for name, param in model.named_parameters():
         print(f'{name}: {param.requires_grad}')
