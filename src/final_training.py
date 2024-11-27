@@ -74,7 +74,7 @@ def train_final_model(model,
     elif stage=='rnn':
         if only_classifier:
             for name, param in model.named_parameters():
-                if 'fc3' not in name:
+                if 'fc1' not in name:
                     param.requires_grad = False
                 else:
                     param.requires_grad = True
