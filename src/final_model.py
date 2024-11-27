@@ -19,47 +19,59 @@ class FinalModel(nn.Module):
         #encoder
         self.encoder = nn.Sequential(
             nn.Conv2d(n_channels, 64, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(64),
+            nn.LayerNorm([64, 21, 21]),
             nn.ReLU(),
+            nn.Dropout(p=0.5),
             nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(64),
+            nn.LayerNorm([64, 11, 11]),
             nn.ReLU(),
+            nn.Dropout(p=0.5),
             nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(64),
+            nn.LayerNorm([64, 11, 11]),
             nn.ReLU(),
+            nn.Dropout(p=0.5),
             nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(64),
+            nn.LayerNorm([64, 6, 6]),
             nn.ReLU(),
+            nn.Dropout(p=0.5),
             nn.Flatten(),
-            nn.Linear(64*6*6, latent_dim)
+            nn.Linear(64 * 6 * 6, latent_dim)
         )
-
+        
         #decoder
         self.decoder = nn.Sequential(
-            nn.Linear(latent_dim, 64*6*6),
+            nn.Linear(latent_dim, 64 * 6 * 6),
             nn.ReLU(),
             nn.Unflatten(1, (64, 6, 6)),
             nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(64),
+            nn.LayerNorm([64, 6, 6]),
             nn.ReLU(),
+            nn.Dropout(p=0.5),
             nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(64),
+            nn.LayerNorm([64, 6, 6]),
             nn.ReLU(),
-            nn.Upsample(size=(11,11), mode='nearest'),
+            nn.Dropout(p=0.5),
+            nn.Upsample(size=(11, 11), mode='nearest'),
             nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(64),
+            nn.LayerNorm([64, 11, 11]),
             nn.ReLU(),
+            nn.Dropout(p=0.5),
             nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(64),
+            nn.LayerNorm([64, 11, 11]),
             nn.ReLU(),
-            nn.Upsample(size=(21,21), mode='nearest'),
+            nn.Dropout(p=0.5),
+            nn.Upsample(size=(21, 21), mode='nearest'),
             nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(64),
-            nn.ReLU(),  
+            nn.LayerNorm([64, 21, 21]),
+            nn.ReLU(),
+            nn.Dropout(p=0.5),
             nn.Conv2d(64, n_channels, kernel_size=3, stride=1, padding=1),
             nn.ReLU()
         )
 
+
+
+        
         if rnn_type == 'LSTM':
             self.rnn = nn.LSTM(input_size=latent_dim, hidden_size=hidden_dim, num_layers=num_layers, batch_first=True)
         elif rnn_type == 'GRU':
@@ -68,10 +80,9 @@ class FinalModel(nn.Module):
             self.rnn = nn.RNN(input_size=latent_dim, hidden_size=hidden_dim, num_layers=num_layers, batch_first=True)
         else:
             raise ValueError("Invalid RNN type.")
-            
-        self.fc1 = nn.Linear(hidden_dim, latent_dim)
+        
+        self.fc1 = nn.Linear(hidden_dim, n_classes)
         self.dropout = nn.Dropout(0.5) # Valor "arbitrario"
-        self.fc3 = nn.Linear(latent_dim, n_classes)
 
 
     #autoencoder
@@ -105,7 +116,6 @@ class FinalModel(nn.Module):
         x = x[:,-1,:]
         x = nn.functional.relu(self.fc1(x))
         x = self.dropout(x)
-        x = self.fc3(x)
         return x
     
 
@@ -117,7 +127,6 @@ class FinalModel(nn.Module):
         z = z[:,-1,:]
         z = nn.functional.relu(self.fc1(z))
         z = self.dropout(z)
-        z = self.fc3(z)
         return z
     
 def ae_loss_function(recon_x, x):
