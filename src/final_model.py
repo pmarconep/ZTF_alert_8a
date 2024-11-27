@@ -103,7 +103,7 @@ class FinalModel(nn.Module):
         size = x.shape[0]
         x = self.encoder(x.view(-1, self.n_channels, 21, 21))
         x, _ = self.rnn(x.view(size, 5, self.latent_dim))
-        x = x.contiguous().view(-1, self.hidden_size)  
+        x = x.contiguous().view(-1, self.latent_dim)  
         print("x.shape", x.shape) 
         reconstruction = self.only_decoder(x) # num_layers rnn == latent_dim
         return reconstruction 
