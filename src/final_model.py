@@ -105,7 +105,7 @@ class FinalModel(nn.Module):
         x, _ = self.rnn(x.view(size, 5, self.latent_dim))
         # x = x.view(5*size, self.latent_dim)
         print("x.shape", x.shape)
-        reconstruction = self.only_decoder(x.view(-1, self.latent_dim))
+        reconstruction = self.only_decoder(x)
         return reconstruction
 
     def rnn_classifier(self, x):
