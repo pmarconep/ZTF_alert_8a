@@ -1,0 +1,153 @@
+Experiment 2_1
+   Validation
+       Precision -- 0.79375
+       Recall    -- 0.725
+       F1        -- 0.72398
+   Test
+       Precision -- 0.65357
+       Recall    -- 0.63333
+       F1        -- 0.63886
+Experiment 2_2
+   Validation
+       Precision -- 0.77186
+       Recall    -- 0.64167
+       F1        -- 0.626
+   Test
+       Precision -- 0.65332
+       Recall    -- 0.625
+       F1        -- 0.63105
+Experiment 2_3
+   Validation
+       Precision -- 0.72001
+       Recall    -- 0.70167
+       F1        -- 0.69004
+   Test
+       Precision -- 0.65957
+       Recall    -- 0.64333
+       F1        -- 0.64862
+Experiment 2_1
+   Validation
+       Precision -- 0.79714
+       Recall    -- 0.72333
+       F1        -- 0.72161
+   Test
+       Precision -- 0.65009
+       Recall    -- 0.62833
+       F1        -- 0.63409
+Experiment 2_2
+   Validation
+       Precision -- 0.79826
+       Recall    -- 0.68833
+       F1        -- 0.68169
+   Test
+       Precision -- 0.65564
+       Recall    -- 0.63333
+       F1        -- 0.63917
+Experiment 2_3
+   Validation
+       Precision -- 0.71193
+       Recall    -- 0.61
+       F1        -- 0.52731
+   Test
+       Precision -- 0.62447
+       Recall    -- 0.60667
+       F1        -- 0.61193
+Experiment 2_4
+   Validation
+       Precision -- 0.11111
+       Recall    -- 0.33333
+       F1        -- 0.16667
+   Test
+       Precision -- 0.11111
+       Recall    -- 0.33333
+       F1        -- 0.16667
+Experiment 3_1
+   Validation
+       Precision -- 0.69132
+       Recall    -- 0.67
+       F1        -- 0.65499
+   Test
+       Precision -- 0.64871
+       Recall    -- 0.63333
+       F1        -- 0.63634
+Experiment 3_2
+   Validation
+       Precision -- 0.79826
+       Recall    -- 0.79167
+       F1        -- 0.79302
+   Test
+       Precision -- 0.63682
+       Recall    -- 0.62667
+       F1        -- 0.63029
+Experiment 3_3
+   Validation
+       Precision -- 0.78325
+       Recall    -- 0.75333
+       F1        -- 0.72619
+   Test
+       Precision -- 0.61013
+       Recall    -- 0.61167
+       F1        -- 0.60551
+Experiment 4_1
+   Validation
+       Precision -- 0.64264
+       Recall    -- 0.6
+       F1        -- 0.51224
+   Test
+       Precision -- 0.64696
+       Recall    -- 0.645
+       F1        -- 0.64474
+Experiment 4_2
+   Validation
+       Precision -- 0.69443
+       Recall    -- 0.64833
+       F1        -- 0.58003
+   Test
+       Precision -- 0.62528
+       Recall    -- 0.62333
+       F1        -- 0.62385
+Experiment 5_2
+   Validation
+       Precision -- 0.75303
+       Recall    -- 0.75333
+       F1        -- 0.75306
+   Test
+       Precision -- 0.61627
+       Recall    -- 0.61833
+       F1        -- 0.61638
+Experiment 5_3
+   Validation
+       Precision -- 0.77182
+       Recall    -- 0.755
+       F1        -- 0.75834
+   Test
+       Precision -- 0.62899
+       Recall    -- 0.605
+       F1        -- 0.61073
+Experiment 6_1
+   Validation
+       Precision -- 0.67771
+       Recall    -- 0.57833
+       F1        -- 0.51966
+   Test
+       Precision -- 0.64954
+       Recall    -- 0.64
+       F1        -- 0.64273
+Experiment 6_3
+   Validation
+       Precision -- 0.42363
+       Recall    -- 0.61333
+       F1        -- 0.49457
+   Test
+       Precision -- 0.56746
+       Recall    -- 0.56833
+       F1        -- 0.56312
+Experiment 6_4
+   Validation
+       Precision -- 0.41944
+       Recall    -- 0.61167
+       F1        -- 0.49275
+   Test
+       Precision -- 0.57585
+       Recall    -- 0.56
+       F1        -- 0.56128

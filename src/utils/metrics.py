@@ -11,7 +11,7 @@ def performance_metrics(true_labels, prediction):
     f1 = round(float(f1), 5)
     return precision, recall, f1
 
-def show_curves(curves, models):
+def show_curves(curves, models, ae_rnn):
     fig, ax = plt.subplots(1, len(curves), figsize=((13/2)*len(curves), 5), dpi = 300)
     fig.set_facecolor('white')
 
@@ -26,8 +26,9 @@ def show_curves(curves, models):
         ax[i].plot(epochs[i], curve['train_loss'], label='training')
         ax[i].set_xlabel('Epoch')
         ax[i].set_ylabel('Loss')
-        ax[i].set_title(f'Loss evolution during training model {models[i].name}')
+        ax[i].set_title(f'Loss evolution during training stage {ae_rnn} for model {models[i].name}')
         ax[i].legend()
+        
     return fig
 
 

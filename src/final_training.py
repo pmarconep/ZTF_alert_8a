@@ -28,11 +28,11 @@ def augment_data(image, y_batch):
     rotated_90 = torch.stack([F.rotate(img, 90) for img in image])
     rotated_270 = torch.stack([F.rotate(img, 270) for img in image])
 
-    h_flip = torch.stack([F.hflip(img) for img in image])
-    v_flip = torch.stack([F.vflip(img) for img in image])
+    # h_flip = torch.stack([F.hflip(img) for img in image])
+    # v_flip = torch.stack([F.vflip(img) for img in image])
 
-    imgs = torch.cat((image, rotated_90, rotated_270, h_flip, v_flip), dim=0)
-    labels = torch.cat((y_batch, y_batch, y_batch, y_batch, y_batch), dim=0)
+    imgs = torch.cat((image, rotated_90, rotated_270), dim=0)
+    labels = torch.cat((y_batch, y_batch, y_batch), dim=0)
     
     # Randomize both tensors in the same way so the labels correspond to the images
     indices = torch.randperm(imgs.size(0))
@@ -56,7 +56,8 @@ def train_final_model(model,
                       augmentation = True,
                       early_stop = True,
                       use_gpu = True,
-                      num_cpu = 0):
+                      num_cpu = 0,
+                      weight_decay = 0.01):
 
     #setup
 
@@ -104,7 +105,10 @@ def train_final_model(model,
 
     validation_loader = DataLoader(validation_dataset, batch_size=len(validation_dataset), shuffle=False, num_workers=num_cpu, pin_memory=use_gpu)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    if stage == 'rnn':
+        optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    else:
+        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     curves = {'train_loss': [], 'val_loss': [], 'train_acc': [], 'val_acc': []}
     model_loss = []

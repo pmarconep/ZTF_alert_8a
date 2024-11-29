@@ -80,7 +80,7 @@ class FinalModel(nn.Module):
             self.rnn = nn.RNN(input_size=latent_dim, hidden_size=hidden_dim, num_layers=num_layers, batch_first=True)
         else:
             raise ValueError("Invalid RNN type.")
-        self.dropout_rnn = nn.Dropout(dropout_prob)
+        self.dropout_rnn = nn.Dropout(0.25)
         self.fc3 = nn.Linear(latent_dim, n_classes)
 
     #autoencoder
@@ -109,23 +109,23 @@ class FinalModel(nn.Module):
         size = x.shape[0]
         x = self.only_encoder(x.view(-1, self.n_channels, 21, 21))
         x, _ = self.rnn(x.view(size, 5, self.latent_dim))
-        x = self.dropout_rnn(x[:, -1, :])
-        return x
+        x = self.dropout_rnn(x)
+        return x[:, -1, :]
 
     def rnn_classifier(self, x):
         size = x.shape[0]
         x = self.only_encoder(x.view(-1, self.n_channels, 21, 21))
         x, _ = self.rnn(x.view(size, 5, self.latent_dim))
-        x = self.dropout_rnn(x[:, -1, :])
-        x = self.fc3(x)
+        x = self.dropout_rnn(x)
+        x = self.fc3(x[:, -1, :])
         return x
     
     def forward(self, x):
         size = x.shape[0]
         x = self.only_encoder(x.view(-1, self.n_channels, 21, 21))
         x, _ = self.rnn(x.view(size, 5, self.latent_dim))
-        x = self.dropout_rnn(x[:, -1, :])
-        x = self.fc3(x)
+        x = self.dropout_rnn(x)
+        x = self.fc3(x[:, -1, :])
         return x
     
 def ae_loss_function(recon_x, x):
