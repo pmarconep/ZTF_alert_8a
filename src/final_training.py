@@ -27,12 +27,13 @@ def augment_data(image, y_batch):
 
     rotated_90 = torch.stack([F.rotate(img, 90) for img in image])
     rotated_270 = torch.stack([F.rotate(img, 270) for img in image])
+    rotated_180 = torch.stack([F.rotate(img, 180) for img in image])
 
     # h_flip = torch.stack([F.hflip(img) for img in image])
     # v_flip = torch.stack([F.vflip(img) for img in image])
 
-    imgs = torch.cat((image, rotated_90, rotated_270), dim=0)
-    labels = torch.cat((y_batch, y_batch, y_batch), dim=0)
+    imgs = torch.cat((image, rotated_90, rotated_270, rotated_180), dim=0)
+    labels = torch.cat((y_batch, y_batch, y_batch, y_batch), dim=0)
     
     # Randomize both tensors in the same way so the labels correspond to the images
     indices = torch.randperm(imgs.size(0))
@@ -57,7 +58,7 @@ def train_final_model(model,
                       early_stop = True,
                       use_gpu = True,
                       num_cpu = 0,
-                      weight_decay = 0.01):
+                      weight_decay = 0.015):
 
     #setup
 

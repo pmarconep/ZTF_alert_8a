@@ -82,6 +82,7 @@ class FinalModel(nn.Module):
             raise ValueError("Invalid RNN type.")
         self.dropout_rnn = nn.Dropout(0.25)
         self.fc3 = nn.Linear(latent_dim, n_classes)
+        self.dropout_fc3 = nn.Dropout(0.25)
 
     #autoencoder
     def only_encoder(self, x):
@@ -104,6 +105,14 @@ class FinalModel(nn.Module):
         x = self.dropout_rnn(x)
         reconstruction = self.only_decoder(x.reshape(-1, self.latent_dim))
         return reconstruction
+    
+    def rnn_encode_test(self, x):
+        size = x.shape[0]
+        x = self.only_encoder(x.view(-1, self.n_channels, 21, 21))
+        x, _ = self.rnn(x.view(size, 5, self.latent_dim))
+        # x = self.dropout_rnn(x)
+        reconstruction = self.only_decoder(x.reshape(-1, self.latent_dim))
+        return reconstruction
 
     def rnn_latent(self, x):
         size = x.shape[0]
@@ -117,6 +126,14 @@ class FinalModel(nn.Module):
         x = self.only_encoder(x.view(-1, self.n_channels, 21, 21))
         x, _ = self.rnn(x.view(size, 5, self.latent_dim))
         x = self.dropout_rnn(x)
+        x = self.fc3(x[:, -1, :])
+        return x
+    
+    def rnn_classifier_test(self, x):
+        size = x.shape[0]
+        x = self.only_encoder(x.view(-1, self.n_channels, 21, 21))
+        x, _ = self.rnn(x.view(size, 5, self.latent_dim))
+        # x = self.dropout_rnn(x)
         x = self.fc3(x[:, -1, :])
         return x
     

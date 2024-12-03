@@ -107,7 +107,7 @@ def plot_umap_lp(models, data, n_neighbors, min_dist, metric, norm = True):
 
 import seaborn as sns
 
-def plot_matrix(models, matrix):
+def plot_matrix(models, matrix, title):
 
     fig, ax = plt.subplots(1, len(models), figsize=((13/2)*len(models), 5), dpi = 300)
 
@@ -116,6 +116,6 @@ def plot_matrix(models, matrix):
         sns.heatmap(matrix[i], annot=True, ax=ax, fmt='.2f', cmap='Blues', cbar=False, xticklabels=['AGN', 'SNe', 'VS'], yticklabels=['AGN', 'SNe', 'VS'])
         ax.set_xlabel('Predicted')
         ax.set_ylabel('Real')
-        ax.set_title(f'Linear probing CM for model {model.name}')
+        ax.set_title(f'Confusion Matrix for {model.name}. {title} dataset.')
     
     return fig
